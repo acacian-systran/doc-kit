@@ -1,6 +1,6 @@
 ---
 name: korean-report-style
-description: Korean-language conventions for technical reports, progress updates, meeting agendas, software handoffs, architecture documents, runbooks, API references, model evaluations, and consortium deliverables — prose register, framing of shortfalls and risks, terminology accuracy, and structural integrity after edits. Use this whenever writing or revising any Korean document intended for colleagues, partners, clients, or evaluators — 진행현황, 중간보고, 기술보고, 연구노트, 코드베이스 인수인계, 운영 문서, 협의 아젠다, 회의록, 제안서 — and also when the user asks to soften, reframe, tighten, or "말투를 바꿔달라" on Korean text. Apply it even for internal-only documents; the register rules are not about audience politeness but about the document reading as a report rather than as speech.
+description: Korean-language conventions for technical reports, progress updates, meeting agendas, software handoffs, architecture documents, runbooks, API references, model evaluations, and consortium deliverables — prose register, framing of shortfalls and risks, terminology accuracy, removal of AI writing tells (이항 대조 · 도입 예고 · 맺음 훈계), and structural integrity after edits. Use this whenever writing or revising any Korean document intended for colleagues, partners, clients, or evaluators — 진행현황, 중간보고, 기술보고, 연구노트, 코드베이스 인수인계, 운영 문서, 협의 아젠다, 회의록, 제안서 — and also when the user asks to soften, reframe, tighten, "말투를 바꿔달라", or "AI 티를 지워달라" on Korean text. Apply it even for internal-only documents; the register rules are not about audience politeness but about the document reading as a report rather than as speech.
 ---
 
 # 한국어 보고 문서 문체
@@ -242,6 +242,57 @@ inline code·교육용 표는 제외한다. 남의 말을 옮긴 자리까지 �
 
 조직 내부에서 굳어진 용어는 그대로 두되, 외부 문서에서는 처음 나올 때 한 번 풀어 쓴다.
 
+### 1.9 AI 문투 제거
+
+생성 모델이 쓴 한국어에는 사람이 잘 쓰지 않는 고정 문형이 남는다. 영어권 점검 목록을
+그대로 옮기면 대부분 한국어에 해당 사항이 없고(수동태·Wh- 도입부·부사 `-ly`),
+줄표 금지처럼 §1.1과 충돌하는 항목도 있다. **줄표는 이 체계에서 제목 한정의 표준 부호이며
+금지하지 않는다.** 아래는 한국어에서만 관측되는 문형으로 한정한다.
+
+의인화(§1.3)·구어체(§1.2)·자기 설명(§1.6)·과장(§1.7)도 같은 부류이며 각 절이 이미 담당한다.
+
+#### 이항 대조
+
+`X가 아니라 Y다`는 Y를 말하기 위해 X를 먼저 세운다. 한 문서에 반복되면 절마다 같은
+리듬으로 읽히고, 부정된 X가 사실인지 아닌지도 남지 않는다. Y를 직접 진술한다.
+
+| 쓰지 않는다 | 쓴다 |
+|---|---|
+| 문제는 성능이 아니라 구조다 | 구조가 원인이다 |
+| 단순한 개선이 아니라 재설계다 | 재설계에 해당한다 |
+| 계측에 그치지 않는다 | (포함하는 범위를 직접 명시) |
+| 검출뿐만 아니라 판정도 포함한다 | 검출과 판정을 포함한다 |
+| 진정한 원인은 배선이다 | 원인은 배선이다 |
+
+#### 도입 예고와 봉합 접속
+
+결론을 예고하는 구절은 결론 제시를 한 문장 순연한다. 접속 부사는 앞 문장이 근거를 갖추면 불필요하다.
+
+| 쓰지 않는다 | 쓴다 |
+|---|---|
+| 결론부터 말하면 | (삭제하고 결론을 진술) |
+| 핵심은 이렇다 · 여기서 중요한 것은 | (삭제하고 핵심을 진술) |
+| 한마디로 · 요컨대 | (삭제) |
+| 즉, · 다시 말해 | 앞 문장을 고쳐 한 번에 진술한다 |
+| 결국 · 그런 의미에서 | (삭제) |
+
+#### 맺음 훈계
+
+절 끝에 붙는 당위문은 행위자와 기한이 없어 후속 조치로 이어지지 않는다.
+
+| 쓰지 않는다 | 쓴다 |
+|---|---|
+| 개선이 필요할 것으로 보인다 | (담당과 기한을 명시) |
+| 검토가 요구된다 | 검토를 요청한다 · 검토가 선행조건이다 |
+| 향후 성과가 기대된다 | (일정과 조건으로 대체) |
+| 이에 대한 고민이 필요하다 | (결정 항목으로 대체) |
+
+#### 리듬
+
+세 항목 병렬(`정확성 · 효율성 · 확장성`)이 절마다 반복되면 목록이 내용을 대신한다.
+항목 수는 사실이 정한다. 명사화 적층(`계측 체계의 신뢰도에 대한 정량화를 통한 제고`)은
+동사로 되돌린다. 굵게 표시는 절당 한 곳 이하로 두고, 이모지 불릿은 쓰지 않는다.
+
 ---
 
 ## 2. 프레이밍
@@ -375,9 +426,9 @@ inline code·교육용 표는 제외한다. 남의 말을 옮긴 자리까지 �
    | 갈래 | 무엇 | 어떻게 |
    |---|---|---|
    | 고침 | §1 어미 | `--fix` 로 자동 치환된다 |
-   | 검토 | §2~§8 | 문맥을 보고 사람이 정한다. 제안을 그대로 넣지 않는다 |
+   | 검토 | §2~§10 | 문맥을 보고 사람이 정한다. 제안을 그대로 넣지 않는다 |
    | 제목 | §1.1 명사구 | 명사구 사용 |
-   | 의심 | software collocation | `--heuristic`에서만 보고하며 자동 교정하지 않는다 |
+   | 의심 | software collocation · AI 문투 | `--heuristic`에서만 보고하며 자동 교정하지 않는다 |
 
    `--json`은 기존 형식을 유지하면서 `summary.total`·`by_tier`·`by_file`·`by_rule`을
    함께 낸다. 일반 Markdown 표도 검사한다. 규칙을 설명하는 표는 알려진 교육용 헤더를
@@ -393,6 +444,7 @@ inline code·교육용 표는 제외한다. 남의 말을 옮긴 자리까지 �
    - §1.3 주어를 사람·물건으로 바꿔 자연스러우면 은유다
    - §1.4 문서 전체가 한 어체인지 확인한다
    - §1.8 그 동사에 목적어를 바꿔 끼워 의미역이 넓은지 확인한다
+   - §1.9 부정된 항을 지우고 결론만 남겨도 뜻이 유지되면 이항 대조다
 4. **§2 프레이밍**을 절 단위로 검토한다. 제목의 주어가 무엇인지 확인한다.
 5. **§3 정확성** — 상태 표기, 용어 정합, 근거 확인.
 6. **§4 체크리스트**를 돌린다. 편집을 여러 번 하였다면 매번 돌린다.

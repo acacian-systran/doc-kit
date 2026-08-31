@@ -1,7 +1,7 @@
 # Software handoff 문체
 
 코드베이스 인수인계, architecture 문서, 운영 runbook, API reference와 model evaluation에서
-반복되는 의인화 표현을 판정한다. 식별자와 기술 용어는 원형을 유지하고, 동작과 관계를
+반복되는 의인화 표현과, 문서 전반의 문맥 의존 AI 문투를 판정한다. 식별자와 기술 용어는 원형을 유지하고, 동작과 관계를
 설명하는 술어만 측정 가능한 표현으로 교정한다.
 
 ## 목차
@@ -9,6 +9,7 @@
 - [1. Collocation heuristic](#1-collocation-heuristic)
 - [2. 판정 원칙](#2-판정-원칙)
 - [3. 영문 식별자와 한국어 서술의 경계](#3-영문-식별자와-한국어-서술의-경계)
+- [4. AI 문투 collocation](#4-ai-문투-collocation)
 
 ## 1. Collocation heuristic
 
@@ -52,3 +53,15 @@ API, enum, field, path, module과 실제 symbol은 backtick으로 원형을 보�
 | `thumbnail이 깨진다` | thumbnail 참조 또는 rendering이 실패한다 |
 | `code가 이해한다` | code가 처리한다 |
 | `조용히 통과한다` | 오류가 검출되지 않은 채 통과한다 |
+## 4. AI 문투 collocation
+
+`SKILL.md` §1.9의 이항 대조와 봉합 접속이다. 정의를 세우는 자리에서는 정상 표현이므로
+`의심` tier로만 보고하고, 한 문서에 반복될 때 교정 대상으로 판정한다.
+
+<!-- style-teaching -->
+| 규칙 ID | 검출 패턴 | 제안 | 검사 범위 | 검출 방식 |
+|---|---|---|---|---|
+| KRS-SW-008 | `(?:은\|는\|이\|가)\s*아니라` | 뒤에 오는 명제를 직접 진술한다 | prose, heading | regex |
+| KRS-SW-009 | `뿐(?:만)?\s*아니라` | A와 B를 함께 진술한다 | prose | regex |
+| KRS-SW-010 | `(?:^\|[.」]\s+)즉,` | 앞 문장을 고쳐 한 번에 진술한다 | prose | regex |
+| KRS-SW-011 | `(?:^\|[.」]\s+)결국\s` | (삭제) | prose | regex |
