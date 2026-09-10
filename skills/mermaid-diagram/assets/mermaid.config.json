@@ -1,0 +1,46 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "fontFamily": "\"Apple SD Gothic Neo\", \"Noto Sans KR\", \"Malgun Gothic\", sans-serif",
+    "fontSize": "14px",
+    "primaryColor": "#F4F5F6",
+    "primaryTextColor": "#2E3A46",
+    "primaryBorderColor": "#5A6672",
+    "lineColor": "#8A94A0",
+    "clusterBkg": "#FCFCFB",
+    "clusterBorder": "#8A94A0",
+    "edgeLabelBackground": "#FFFFFF",
+    "actorBkg": "#EFF5FC",
+    "actorBorder": "#2E5C8A",
+    "actorTextColor": "#1F3A5A",
+    "signalColor": "#2E3A46",
+    "noteBkgColor": "#FEF8E6",
+    "noteBorderColor": "#B8941F",
+    "taskBkgColor": "#EFF5FC",
+    "taskBorderColor": "#2E5C8A",
+    "taskTextColor": "#1F3A5A",
+    "taskTextDarkColor": "#1F3A5A",
+    "taskTextOutsideColor": "#2E3A46",
+    "activeTaskBkgColor": "#E8F6F5",
+    "activeTaskBorderColor": "#1E7F79",
+    "critBkgColor": "#FEF6F5",
+    "critBorderColor": "#C0392B",
+    "doneTaskBkgColor": "#F4F5F6",
+    "doneTaskBorderColor": "#8A94A0",
+    "sectionBkgColor": "#FCFCFB",
+    "sectionBkgColor2": "#FFFFFF",
+    "altSectionBkgColor": "#FFFFFF",
+    "gridColor": "#D5D9DE",
+    "todayLineColor": "#B4691A"
+  },
+  "flowchart": {
+    "curve": "basis",
+    "htmlLabels": true,
+    "nodeSpacing": 40,
+    "rankSpacing": 50
+  },
+  "sequence": {
+    "mirrorActors": false,
+    "messageAlign": "center"
+  }
+}

@@ -1,0 +1,92 @@
+---
+title: 「제목」 — 「무엇에 대한 그림인가」
+config:
+  theme: base
+  flowchart:
+    curve: basis
+---
+flowchart TD
+%% 답하는 질문: 「이 그림 하나가 답하는 질문 한 문장. 두 개면 그림을 둘로 나눈다」
+%% 상태: 목표 구조(To-Be) — 구현 진척은 그리지 않는다. README "그린 시점" 절에 적는다.
+%% ·
+%% 읽는 법: 굵은 선(==>)만 따라가면 전체가 읽힌다. 얇은 선은 받아오는 것과
+%% 남기는 것. 실린더는 DB, 문서 모양은 파일시스템, 육각형은 실행을 부르는 것.
+%% ·
+%% 렌더: assets/render.sh 「이름」.mmd     (GitHub · Notion · mermaid.ai 에는 소스 그대로 붙인다)
+%% ·
+%% ── 쓰는 법 ────────────────────────────────────────────────
+%% 이 파일을 복사해 이름을 바꾸고 채운다. 그대로 렌더하면 예시 그림이 나온다.
+%% 단계의 사슬을 그리는 기본형이다. 위에서 아래로 단계, 왼쪽에 받아오는 것,
+%% 오른쪽에 남기는 것을 두려고 하지만 자리는 레이아웃 엔진이 정한다 — 자리를
+%% 강제하려 하지 말고, 선이 상자를 관통하면 인접 단계로 옮긴다 (grammar.md "배치").
+%% 조건은 자기 칸을 갖고 filter 색이다. 괄호로 라벨에 묶지 않는다.
+%% 규칙은 이 스킬의 references/grammar.md 에 있다.
+
+  %% ── 받아오는 것 ─────────────────────────
+  cron{{"매일 03:00 (cron)"}}:::trigger
+  api["「바깥에서 받는 것」"]:::ext
+
+  %% ── 단계 ────────────────────────────────
+  s1["1 · 「무엇을 한다」"]:::step
+  s2{"2 · 「무엇으로 거른다」
+  통과: 「조건 한 줄」"}:::filter
+  s3["3 · 「무엇을 한다」"]:::step
+  s4["4 · 「LLM 이 하는 것」"]:::nondet
+
+  %% ── 남기는 것 ───────────────────────────
+  o1[("「원본 테이블」")]:::table
+  o2[("「거른 결과」")]:::table
+  o3@{ shape: doc, label: "「경로」/**" }
+  o3:::file
+  o4@{ shape: doc, label: "「아직 정하지 않은 산출물」
+  * 벤더 미정 — 자리만 있다" }
+  o4:::tbd
+
+  %% ── 축 ─────────────────────────────────
+  cron ==> s1 ==> s2 ==> s3 ==> s4
+
+  %% ── 받아오는 것 · 남기는 것 ─────────────
+  api --> s1
+  s1 --> o1
+  s2 --> o2
+  s3 --> o3
+  s4 -.-> o4
+
+  %% ── 판단의 근거는 그리지 않고 여기 적는다 ──
+  %% 왜 이 순서인지, 왜 저 게이트를 두지 않았는지는 그림에 넣지 않는다.
+  %% 근거 문서의 파일명과 절 번호를 남긴다 — 예: 「spec 파일명」 §2-3.
+
+%% palette:begin
+  %% ext    외부 — 우리가 만들지 않은 것. 외부 API · 남의 모듈
+  classDef ext fill:#F4F5F6,stroke:#8A94A0,stroke-dasharray:4 3,color:#5A6672
+  %% trigger 트리거 — 무엇이 실행을 부르나. cron · 사람 · HTTP 요청. 육각형 {{ }} 과 짝
+  classDef trigger fill:#FEF8E6,stroke:#B8941F,color:#6B5511
+  %% step   단계 — 무언가를 하는 곳
+  classDef step fill:#EFF5FC,stroke:#2E5C8A,color:#1F3A5A
+  %% filter 필터 — 거르는 단계와 조건 게이트. 여기서 대상이 줄어든다
+  classDef filter fill:#E8F6F5,stroke:#1E7F79,color:#145653
+  %% file   파일 — 파일시스템. @{shape: doc} 와 짝
+  classDef file fill:#FEF8E6,stroke:#B8941F,color:#6B5511
+  %% table  테이블 — RDB, 행을 보관하는 곳. [( )] 과 짝
+  classDef table fill:#F4F5F6,stroke:#5A6672,color:#2E3A46
+  %% canon  정본 — 같은 DB 지만 잃으면 복구가 어렵거나 비싼 것. 굵은 테두리
+  classDef canon fill:#F4F5F6,stroke:#5A6672,stroke-width:3px,color:#2E3A46
+  %% index  색인 — 같은 DB 안에서 검색을 받는 곳. 모양은 실린더, 색만 보라
+  classDef index fill:#F2EFF9,stroke:#5B4B8A,color:#3E3260
+  %% nondet 비결정 — LLM 이 닿는 것, 외부 판정에 매달린 것. 결과가 매번 같지 않다
+  classDef nondet fill:#FDF0E3,stroke:#B4691A,color:#8A4B12
+  %% tbd    미확정 — 그렸지만 설계가 아직 정하지 않은 자리. 붉은색은 이 뜻이 독점한다.
+  %%        구현 여부를 뜻하지 않는다 — grammar.md "미확정" 절
+  classDef tbd fill:#FEF6F5,stroke:#C0392B,stroke-dasharray:4 3,color:#A03026
+  %% ro     조회 — 쓰기가 하나도 없는 것
+  classDef ro fill:#EFF7F0,stroke:#2F5A34,color:#1F3F23
+  %% note   각주 — 상자가 아니다. 그림 안에 있어야 읽히는 부연
+  classDef note fill:transparent,stroke:transparent,color:#5A6672,font-size:12px
+  %% warn   경고각주 — 그림이 말하는 것과 실제가 다른 지점
+  classDef warn fill:transparent,stroke:transparent,color:#A03026,font-size:12px
+  %% 컨테이너(subgraph)는 classDef 가 아니라 style 로 준다. 점선 = 논리 그룹,
+  %% 실선 = 배포 경계 — "같이 묶여 있나"와 "같이 죽나"는 같은 말이 아니다.
+  %%   style 「영역id」  fill:#FCFCFB,stroke:#8A94A0,stroke-dasharray:4 3
+  %%   style 「배포id」  fill:#F7FAFD,stroke:#5A6672,stroke-width:2px
+  %%   style 「앱id」    fill:#EFF5FC,stroke:#2E5C8A,stroke-dasharray:4 3
+%% palette:end

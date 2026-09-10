@@ -1,0 +1,107 @@
+---
+title: 「제목」 — 「무엇에 대한 그림인가」
+config:
+  theme: base
+  layout: elk
+  flowchart:
+    curve: linear
+---
+flowchart TB
+%% 답하는 질문: 「이 그림 하나가 답하는 질문 한 문장」
+%% 상태: 목표 구조(To-Be). 붉은 점선 = 미확정 (설계가 아직 정하지 않은 자리).
+%% ·
+%% 컨테이너형. 상자가 스무 개를 넘고 배포 경계가 여럿일 때 쓴다. 기본형
+%% (_template-flow.mmd)은 단계의 사슬을 그리는 형태라 중첩 경계를 못 담는다.
+%% ·
+%% 읽는 법: 실선 상자 = 배포 단위 (같이 죽는 것). 점선 상자 = 논리 그룹
+%% (같이 묶인 것). 굵은 선만 따라가면 요청 하나가 지나가는 길이 읽힌다.
+%% ·
+%% 렌더: assets/render.sh 「이름」.mmd
+%%   layout: elk 를 쓴다. 기본 dagre 는 중첩 subgraph 안에서 선이 상자를 관통한다.
+%%   GitHub 는 elk 를 지원하지 않아 dagre 로 그린다 — 거기서도 읽히는지 한 번 본다.
+%% ·
+%% ── 쓰는 법 ────────────────────────────────────────────────
+%% subgraph 의 색은 classDef 가 아니라 style 로 준다 (팔레트 끝의 주석 참고).
+%% 부연은 설명하는 subgraph **안**에 note 클래스 노드로 둔다 — 테두리가 대상과 묶어 준다.
+%% 왕복은 <--> 한 선으로 합친다. 따로 그리면 되돌아가는 선이 배치를 끌어당긴다.
+%% subgraph 안의 노드가 밖과 이어지면 그 subgraph 의 direction 은 무시된다.
+
+  client["「클라이언트」"]:::step
+  ops{{"「운영자」"}}:::trigger
+
+  subgraph upstream["「앞단 (논리 그룹)」"]
+    a1["「무엇을 한다」"]:::step
+    a2["「무엇을 한다」"]:::step
+    a1 ==> a2
+    n1["* 「이 그룹에만 걸리는 사실 —
+    예: 배포 경계 밖에 그렸지만 As-Is 는 같은 프로세스다」"]:::warn
+  end
+
+  subgraph deploy["「배포 단위」"]
+    subgraph app["「애플리케이션」"]
+      api["「진입점」"]:::step
+      gate{"「한 벌의 판정 (fail-closed)」
+      두 경로가 같은 규칙을 쓴다"}:::filter
+      s1["「무엇을 한다」"]:::step
+      llm["「모델 호출」"]:::nondet
+      gap["「아직 정하지 않은 것」
+      * 벤더 · 근거 문서의 행"]:::tbd
+      api ==> gate ==> s1
+      gate --> gap
+      s1 --> llm
+    end
+    subgraph store["「상태 저장소」"]
+      db[("「정본」")]:::canon
+      idx[("「색인」")]:::index
+    end
+    s1 --> db
+    s1 -.-> idx
+  end
+
+  ext["「외부 시스템」"]:::ext
+  client ==> api
+  a2 --> api
+  ops -.->|"제어"| api
+  llm <-->|"요청 · 응답"| ext
+
+  legend["범례 — 실선 상자 배포 경계 · 점선 상자 논리 그룹 · 붉은 점선 미확정 · 주황 비결정"]:::note
+
+  style upstream fill:#FCFCFB,stroke:#8A94A0,stroke-dasharray:4 3
+  style deploy fill:#F7FAFD,stroke:#5A6672,stroke-width:2px
+  style app fill:#EFF5FC,stroke:#2E5C8A,stroke-dasharray:4 3
+  style store fill:#FCFCFB,stroke:#8A94A0,stroke-dasharray:4 3
+
+%% palette:begin
+  %% ext    외부 — 우리가 만들지 않은 것. 외부 API · 남의 모듈
+  classDef ext fill:#F4F5F6,stroke:#8A94A0,stroke-dasharray:4 3,color:#5A6672
+  %% trigger 트리거 — 무엇이 실행을 부르나. cron · 사람 · HTTP 요청. 육각형 {{ }} 과 짝
+  classDef trigger fill:#FEF8E6,stroke:#B8941F,color:#6B5511
+  %% step   단계 — 무언가를 하는 곳
+  classDef step fill:#EFF5FC,stroke:#2E5C8A,color:#1F3A5A
+  %% filter 필터 — 거르는 단계와 조건 게이트. 여기서 대상이 줄어든다
+  classDef filter fill:#E8F6F5,stroke:#1E7F79,color:#145653
+  %% file   파일 — 파일시스템. @{shape: doc} 와 짝
+  classDef file fill:#FEF8E6,stroke:#B8941F,color:#6B5511
+  %% table  테이블 — RDB, 행을 보관하는 곳. [( )] 과 짝
+  classDef table fill:#F4F5F6,stroke:#5A6672,color:#2E3A46
+  %% canon  정본 — 같은 DB 지만 잃으면 복구가 어렵거나 비싼 것. 굵은 테두리
+  classDef canon fill:#F4F5F6,stroke:#5A6672,stroke-width:3px,color:#2E3A46
+  %% index  색인 — 같은 DB 안에서 검색을 받는 곳. 모양은 실린더, 색만 보라
+  classDef index fill:#F2EFF9,stroke:#5B4B8A,color:#3E3260
+  %% nondet 비결정 — LLM 이 닿는 것, 외부 판정에 매달린 것. 결과가 매번 같지 않다
+  classDef nondet fill:#FDF0E3,stroke:#B4691A,color:#8A4B12
+  %% tbd    미확정 — 그렸지만 설계가 아직 정하지 않은 자리. 붉은색은 이 뜻이 독점한다.
+  %%        구현 여부를 뜻하지 않는다 — grammar.md "미확정" 절
+  classDef tbd fill:#FEF6F5,stroke:#C0392B,stroke-dasharray:4 3,color:#A03026
+  %% ro     조회 — 쓰기가 하나도 없는 것
+  classDef ro fill:#EFF7F0,stroke:#2F5A34,color:#1F3F23
+  %% note   각주 — 상자가 아니다. 그림 안에 있어야 읽히는 부연
+  classDef note fill:transparent,stroke:transparent,color:#5A6672,font-size:12px
+  %% warn   경고각주 — 그림이 말하는 것과 실제가 다른 지점
+  classDef warn fill:transparent,stroke:transparent,color:#A03026,font-size:12px
+  %% 컨테이너(subgraph)는 classDef 가 아니라 style 로 준다. 점선 = 논리 그룹,
+  %% 실선 = 배포 경계 — "같이 묶여 있나"와 "같이 죽나"는 같은 말이 아니다.
+  %%   style 「영역id」  fill:#FCFCFB,stroke:#8A94A0,stroke-dasharray:4 3
+  %%   style 「배포id」  fill:#F7FAFD,stroke:#5A6672,stroke-width:2px
+  %%   style 「앱id」    fill:#EFF5FC,stroke:#2E5C8A,stroke-dasharray:4 3
+%% palette:end

@@ -1,0 +1,48 @@
+---
+title: 「제목」 — 「한 요청이 지나가는 순서」
+config:
+  theme: base
+  sequence:
+    mirrorActors: false
+---
+sequenceDiagram
+%% 답하는 질문: 「한 실행이 어느 순서로 누구를 부르나 — 한 문장」
+%% 상태: 목표 구조(To-Be).
+%% ·
+%% 순서도(sequence)는 "한 실행이 도는 순서"를 그린다. "한 대상이 지나가는 순서"와
+%% 다르면 그림을 나눈다 (grammar.md "그림을 언제 나누나"). 참여자가 여섯을 넘으면
+%% 한 요청이 아니라 시스템을 그리고 있는 것이다 — 컨테이너형으로 간다.
+%% ·
+%% 읽는 법: 실선 화살표 = 호출, 점선 = 응답. Note 는 그림이 말하는 것과 실제가
+%% 다른 지점에만 쓴다. autonumber 는 실행 순서를 묻는 그림에서만 켠다.
+%% ·
+%% 렌더: assets/render.sh 「이름」.mmd
+%% 색: sequence 는 classDef 가 없다. 색은 frontmatter themeVariables 나 rect 로 준다.
+
+  autonumber
+  actor U as 「사람 · 트리거」
+  participant A as 「진입점」
+  participant Q as 「큐 · 저장소」
+  participant W as 「워커」
+  participant L as 「외부 · 모델」
+
+  U->>A: 「요청」
+  A->>Q: 「남긴다」
+  A-->>U: 202 접수
+
+  loop 「폴링 · 재시도 — 조건 한 줄」
+    W->>Q: 「가져온다」
+    Q-->>W: 「준다」
+  end
+
+  rect rgb(253, 240, 227)
+    Note over W,L: 비결정 — 결과가 매번 같지 않다
+    W->>L: 「판정 요청」
+    L-->>W: 「판정」
+  end
+
+  alt 「통과 조건」
+    W->>Q: 「결과 저장」
+  else 「미달」
+    W--xQ: 「버린다 · 반려」
+  end

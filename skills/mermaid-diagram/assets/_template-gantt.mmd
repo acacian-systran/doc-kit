@@ -1,0 +1,30 @@
+---
+title: 「제목」 — 「무엇이 언제 도나」
+config:
+  theme: base
+---
+gantt
+%% 답하는 질문: 「무엇이 언제 돌고 무엇이 무엇을 기다리나」
+%% 상태: 계획(To-Be). 실제 일정은 「이슈 트래커」가 정본이다 — 이 그림은 의존 관계를 보이는 데만 쓴다.
+%% ·
+%% 간트는 "시간이 주제"일 때만 쓴다. 단계의 순서만 말하고 싶으면 flowchart 다.
+%% after 로 의존을 적으면 날짜를 손으로 맞추지 않아도 된다 — 앞 작업이 밀리면 같이 민다.
+%% crit 은 밀리면 전체가 미는 것에만. milestone 은 날짜 하나짜리 사건.
+%% ·
+%% 렌더: assets/render.sh 「이름」.mmd
+
+  dateFormat YYYY-MM-DD
+  axisFormat %m/%d
+  excludes weekends
+
+  section 「앞단」
+    「수집기 만들기」          :a1, 2026-09-14, 5d
+    「스키마 확정」            :a2, after a1, 3d
+
+  section 「판정」
+    「규칙 한 벌 정의」        :crit, b1, after a2, 4d
+    「LLM 판정 붙이기」        :b2, after b1, 5d
+    「벤더 결정 (미확정)」     :milestone, b3, after b2, 0d
+
+  section 「운영」
+    「배포 · 모니터링」        :c1, after b3, 3d
