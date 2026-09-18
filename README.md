@@ -8,7 +8,7 @@
 skills/
   mermaid-diagram/              # 단독
   explain-diff-html/            # 단독
-  paper-review/                 # 단독
+  paper-tutor/                  # 단독
   korean-report/                # 번들 — 짝으로 쓰는 스킬 묶음
     korean-report-style/
     korean-report-doc/
@@ -21,7 +21,7 @@ skills/
 |------|------|------|
 | `mermaid-diagram`     | 아키텍처·순서·상태·ER·일정 그림을 Mermaid 소스로 그려 SVG 로 렌더 | 단독 |
 | `explain-diff-html`   | 코드 변경(diff/PR)을 한국어 인터랙티브 HTML 문서로 설명 | 단독 |
-| `paper-review`        | 논문을 학술지 리뷰 형식의 한국어 요약 노트로, 앵커를 달아서 | 단독 |
+| `paper-tutor`         | 논문 공부 — 읽기 전 용어집(prep) · 원문 앵커 Q&A(ask) · 메커니즘 중심 노트(read) · 대화형 퀴즈(quiz) | 단독 |
 | `korean-report-style` | 한국어 보고 문서의 문체·프레이밍 규약, AI 문투 검출 (문장 담당) | korean-report |
 | `korean-report-doc`   | 한국어 기술 문서를 자립형 HTML/PDF로 제작 (템플릿·도해 담당) | korean-report |
 
