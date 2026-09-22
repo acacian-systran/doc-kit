@@ -29,7 +29,7 @@ README 의 표와 설치 안내도 맞춘다.
 |---|---|---|
 | 1 | 이름 | `paper-tutor` |
 | 2 | paper-review 와의 관계 | **흡수.** 앵커 규약·결과/주장 분리·한계 이분·pdftext.py 는 유지. 노트 골격은 재설계. 재현성 체크리스트는 references 로 강등 |
-| 3 | 파일 배치 | `notes/papers/<citekey>/` 한 디렉터리 (§7) |
+| 3 | 파일 배치 | `papers/<citekey>/study/` (§7). `paper-lab` 과 루트 공유 |
 | 4 | 퀴즈 형식 | 대화형, 한 문제씩. 문제·채점 기록은 파일에 |
 | 5 | 용어 설명 | 쉬운 설명 / 일반 설명 두 수준 + **자기 점검 한 줄**. 사용자가 배경을 말하면 당연한 용어는 뺀다 |
 | 6 | 퀴즈 오답 | 힌트 1회(원문 앵커) → 두 번째 오답에 정답·해설 |
@@ -122,7 +122,7 @@ prerequisite 가 본체다. introduced 는 논문이 설명해 주므로 한 줄
 
 | 유형 | 묻는 것 |
 |---|---|
-| 사실 | 무엇을 했고 무엇을 얻었나 |
+| 사실 | 무엇을 하였고 무엇을 얻었나 |
 | 이유 | 왜 그렇게 설계했나, 저자의 근거는 |
 | 적용·비판 | 조건이 바뀌면, 저자가 보이지 않은 것은 |
 
@@ -163,14 +163,19 @@ Read 로 PDF 직접. arXiv 는 `/pdf/` 또는 HTML 판. 붙여넣은 텍스트�
 ## 7. 파일 배치
 
 ```
-notes/papers/<citekey>/          # citekey = 제1저자성-연도-제목첫단어
-  paper.pdf                      # 있으면
-  paper.txt                      # pdftext.py 출력, [[p.N]] 앵커
-  glossary.md                    # prep
-  qa.md                          # ask
-  note.md                        # read
-  quiz.md                        # quiz
+papers/<citekey>/                # citekey = 제1저자성-연도-제목첫단어
+  study/                         # 이 스킬의 산출
+    paper.pdf                    # 있으면
+    paper.txt                    # pdftext.py 출력, [[p.N]] 앵커
+    glossary.md                  # prep
+    qa.md                        # ask
+    note.md                      # read
+    quiz.md                      # quiz
+  lab/                           # `paper-lab` 의 구현·실험
 ```
+
+v0.2 까지는 `notes/papers/<citekey>/` 였다. `paper-lab` 과 루트를 공유하기 위해
+`papers/<citekey>/study/` 로 이전하였다(2026-09-22).
 
 사용자가 경로를 지정하지 않으면 이 규칙으로 쓰고 경로를 알린다. 묻지 않는다.
 

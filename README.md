@@ -9,6 +9,7 @@ skills/
   mermaid-diagram/              # 단독
   explain-diff-html/            # 단독
   paper-tutor/                  # 단독
+  paper-lab/                    # 단독
   korean-report/                # 번들 — 짝으로 쓰는 스킬 묶음
     korean-report-style/
     korean-report-doc/
@@ -22,8 +23,12 @@ skills/
 | `mermaid-diagram`     | 아키텍처·순서·상태·ER·일정 그림을 Mermaid 소스로 그려 SVG 로 렌더 | 단독 |
 | `explain-diff-html`   | 코드 변경(diff/PR)을 한국어 인터랙티브 HTML 문서로 설명 | 단독 |
 | `paper-tutor`         | 논문 공부 — 읽기 전 용어집(prep) · 원문 앵커 Q&A(ask) · 메커니즘 중심 노트(read) · 대화형 퀴즈(quiz) | 단독 |
+| `paper-lab`           | 논문 구현 — 구현 가치 판정(gate) · 주장 표와 예산(plan) · 성질 검사(build) · 축소 재현과 절제(run) · 격차 분석(gap) | 단독 |
 | `korean-report-style` | 한국어 보고 문서의 문체·프레이밍 규약, AI 문투 검출 (문장 담당) | korean-report |
 | `korean-report-doc`   | 한국어 기술 문서를 자립형 HTML/PDF로 제작 (템플릿·도해 담당) | korean-report |
+
+`paper-tutor` 와 `paper-lab` 은 산출물 루트를 공유한다 — 논문 하나가
+`papers/<citekey>/` 이고 그 아래 `study/`(읽기)와 `lab/`(구현)으로 갈린다.
 
 ## 설치
 
