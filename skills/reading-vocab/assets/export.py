@@ -2,6 +2,7 @@
 """cards.csv(원본) → quizlet.txt · anki.txt · cards.md
 
     python3 export.py papers/<citekey>/vocab/cards.csv [--no-example]
+    python3 export.py papers/<key>/vocab/<unit>/cards.csv     # 책: 장마다 한 덱 (unit = ch06)
 
 cards.csv 열: kind,term,pos,meaning,everyday,outside,example,anchor
   kind      A(전문 용어) · B(뜻이 바뀌는 학술 어휘) · C(학술 표현) · W(일반 어휘)
@@ -57,12 +58,23 @@ def quizlet(cards, with_example):
     return "\n".join(lines) + "\n"
 
 
-def anki(cards, citekey, with_example):
+def locate(src):
+    """cards.csv 경로 → (citekey, unit). 논문은 unit 이 없다."""
+    d = src.resolve().parent
+    if d.name == "vocab":
+        return d.parent.name, ""
+    if d.parent.name == "vocab":
+        return d.parent.parent.name, d.name
+    sys.exit(f"{src}: papers/<key>/vocab/cards.csv 또는 papers/<key>/vocab/<unit>/cards.csv 여야 한다")
+
+
+def anki(cards, citekey, unit, with_example):
+    deck = f"Vocab::{citekey}" + (f"::{unit}" if unit else "")
     out = [
         "#separator:tab",
         "#html:true",
         "#notetype:Basic",
-        f"#deck:Papers::{citekey}",
+        f"#deck:{deck}",
         "#tags column:3",
     ]
     e = html.escape
@@ -70,7 +82,7 @@ def anki(cards, citekey, with_example):
         back = e(meaning(c))
         if with_example and c["example"]:
             back += f'<br><br><i>{e(c["example"])}</i><br><small>{e(c["anchor"])}</small>'
-        tags = f"{citekey} {KIND_TAG[c['kind']]}"
+        tags = " ".join(filter(None, [citekey, unit, KIND_TAG[c["kind"]]]))
         out.append(f"{e(front(c))}\t{back}\t{tags}")
     return "\n".join(out) + "\n"
 
@@ -89,11 +101,11 @@ def main():
     ap.add_argument("--no-example", action="store_true", help="뒷면에 뜻만 (쓰기 모드용)")
     a = ap.parse_args()
     src = Path(a.csv)
-    citekey = src.resolve().parent.parent.name  # papers/<citekey>/vocab/cards.csv
+    citekey, unit = locate(src)
     cards = load(src)
     ex = not a.no_example
     (src.parent / "quizlet.txt").write_text(quizlet(cards, ex), encoding="utf-8")
-    (src.parent / "anki.txt").write_text(anki(cards, citekey, ex), encoding="utf-8")
+    (src.parent / "anki.txt").write_text(anki(cards, citekey, unit, ex), encoding="utf-8")
     (src.parent / "cards.md").write_text(markdown(cards), encoding="utf-8")
     counts = {k: sum(c["kind"] == k for c in cards) for k in KIND_TAG}
     by_kind = " · ".join(f"{k} {n}" for k, n in counts.items())

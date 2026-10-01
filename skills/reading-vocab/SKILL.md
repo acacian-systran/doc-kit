@@ -1,13 +1,15 @@
 ---
-name: paper-vocab
-description: Turn an academic paper into a flashcard deck (Quizlet · Anki) whose meanings are the ones the paper actually uses — technical terms kept as English headwords with a one-line definition, academic words whose paper sense differs from the everyday sense, recurring academic phrases, and general words above the learner's level — each card carrying the source sentence and a page anchor. Writes one source file (cards.csv) and exports it to Quizlet paste text, an Anki import file, and a review table. Keeps a shared known-word list that shrinks future decks, set by a one-time vocabulary level test and updated from pasted Quizlet results. Use whenever the user hands over a paper (PDF, arXiv link, or pasted text) and asks for 단어장 · 단어 카드 · 퀴즐렛 · Quizlet · Anki · 논문 어휘 · 논문 단어 외우기 · 플래시카드 · flashcards, or asks for 어휘 수준 테스트 · 틀린 단어 반영 · 아는 단어 빼줘. For a prerequisite glossary or concept study, use paper-tutor instead.
+name: reading-vocab
+description: Turn an academic paper — or a technical book chapter in Markdown (O'Reilly · web clippings · Obsidian notes) — into a flashcard deck (Quizlet · Anki) whose meanings are the ones the source actually uses — technical terms kept as English headwords with a one-line definition, academic words whose in-text sense differs from the everyday sense, recurring academic phrases, and general words above the learner's level — each card carrying the source sentence and a page or section anchor. A book gets one deck per chapter, and a term already carded in another chapter is not repeated. Writes one source file (cards.csv) and exports it to Quizlet paste text, an Anki import file, and a review table. Keeps a shared known-word list that shrinks future decks, set by a one-time vocabulary level test and updated from pasted Quizlet results. Use whenever the user hands over a paper (PDF, arXiv link, or pasted text) or a book/chapter Markdown file or folder and asks for 단어장 · 단어 카드 · 퀴즐렛 · Quizlet · Anki · 논문 어휘 · 논문 단어 외우기 · 책 단어 · 원서 단어장 · 플래시카드 · flashcards, or asks for 어휘 수준 테스트 · 틀린 단어 반영 · 아는 단어 빼줘. For a prerequisite glossary or concept study, use paper-tutor instead.
 ---
 
-# 논문 → 단어 카드 (Quizlet · Anki)
+# 논문 · 책 → 단어 카드 (Quizlet · Anki)
 
-논문 한 편에서 **그 논문이 쓰는 뜻 하나**만 골라 카드로 만든다. 사전의 뜻을 나열하지
-않는다. 뜻마다 원문 문장과 쪽 번호를 붙여, 카드의 뜻이 실제 쓰임과 맞는지 언제든
-확인할 수 있게 한다.
+논문 한 편(또는 책 한 장)에서 **그 원문이 쓰는 뜻 하나**만 골라 카드로 만든다. 사전의 뜻을
+나열하지 않는다. 뜻마다 원문 문장과 앵커(쪽 · 절)를 붙여, 카드의 뜻이 실제 쓰임과 맞는지
+언제든 확인할 수 있게 한다.
+
+아래에서 "논문"은 책의 한 장도 가리킨다. 책에만 해당하는 차이는 §2.1 에 모았다.
 
 이 스킬이 실패하는 방식은 두 가지다.
 1. 사전 첫 뜻을 그대로 적는다. (`novel` → 소설)
@@ -28,12 +30,12 @@ description: Turn an academic paper into a flashcard deck (Quizlet · Anki) whos
 
 | 항목 | 필수 | 없을 때 |
 |---|---|---|
-| 논문 (PDF · arXiv 링크 · 붙여넣은 텍스트) | 예 | 요청한다 |
+| 원문 — 논문 (PDF · arXiv 링크 · 붙여넣은 텍스트) 또는 책 (장별 Markdown 파일 · 그 폴더) | 예 | 요청한다 |
 | 분야 | 아니오 | AI·머신러닝 (NLP·RAG 포함). 초록이 명백히 다른 분야면 그 분야로 하고 `cards.md` 머리에 적는다 |
 | 카드 수 상한 | 아니오 | 없음. 기준에 걸리는 단어는 모두 넣는다 |
-| 범위 (전체 · 특정 절) | 아니오 | 본문 전체. References · Appendix 는 뺀다 |
+| 범위 (전체 · 특정 절 · 책이면 장) | 아니오 | 논문은 본문 전체, References · Appendix 는 뺀다. 책은 어느 장인지 묻는다. "전부"면 장 번호 순으로 한 장씩 만든다 |
 
-카드는 **논문당 한 세트**, 방향은 **영어 → 한국어**, 뒷면은 **뜻 + 예문 + 쪽**이다.
+카드는 **논문당 한 세트, 책은 장마다 한 세트**, 방향은 **영어 → 한국어**, 뒷면은 **뜻 + 예문 + 앵커(쪽 · 절)**이다.
 
 ## 2. 원문 확보
 
@@ -59,6 +61,29 @@ python3 ~/.claude/skills/paper-tutor/assets/pdftext.py paper.pdf      # [[p.N]] 
 
 붙여넣은 텍스트에는 쪽 번호가 없으므로 앵커를 절 번호(`§3.2`)로 단다. 쪽 번호를 지어내지
 않는다.
+
+### 2.1 책 · Markdown 원문
+
+장마다 Markdown 파일 하나인 책(O'Reilly 클리핑, Obsidian 노트 등)은 이 스킬의 `mdtext.py` 로
+평문을 뽑는다. 쪽 번호가 없으므로 앵커는 **장 + 가장 가까운 제목**(`ch06 §Session Level`)이고,
+추출기가 제목마다 `[[ch06 §...]]` 줄을 넣는다. 코드 블록 · 이미지 · 링크 주소 · frontmatter 는
+지운다. 코드 안의 식별자는 카드로 만들지 않는다.
+
+```bash
+python3 <스킬경로>/assets/mdtext.py "<볼트>/6. Evaluating Multi-Turn Conversations.md" \
+  > papers/<key>/study/ch06.txt
+```
+
+```
+papers/<key>/                      # key = 제1저자성-연도-제목첫단어 (shankar-2026-evals)
+  study/ch06.txt                   # mdtext.py 산출
+  vocab/ch06/cards.csv             # 장마다 덱 하나. 내보내기 파일도 이 폴더에 생긴다
+```
+
+- **원문은 영어 단독 파일을 쓴다.** 같은 볼트에 번역을 섞은 사본이 있으면(본문 사이에 한국어
+  문단) 영어 원본을 찾는다. 번역본은 뜻을 정할 근거가 아니다 — 대조용으로만 볼 수 있다.
+- 파일 이름 앞 숫자가 장 번호가 된다(`6. ...md` → `ch06`). 숫자가 없으면 `--unit` 으로 준다.
+- 장 사이 중복은 `filter --seen`(§3.3)으로 뺀다. 앞 장에서 이미 외운 카드를 다시 만들지 않는다.
 
 ## 3. 단어 고르기
 
@@ -92,12 +117,16 @@ B 를 가장 공들여 찾는다. 아는 단어처럼 보여서 독자가 그냥
 
 ```bash
 uv run -q --with wordfreq python <스킬경로>/assets/known.py --papers papers filter cands.txt
+# 책이면 같은 책의 다른 장 덱과도 대조한다
+uv run -q --with wordfreq python <스킬경로>/assets/known.py --papers papers filter cands.txt \
+  --seen papers/<key>/vocab/ch06
 ```
 
 | 판정 | 처리 |
 |---|---|
 | `keep(hard)` | 넣는다 |
 | `drop(known)` | 뺀다 (종류 무관) |
+| `drop(seen:ch02)` | 뺀다. 단, 이 장에서 **다른 뜻**으로 쓰이면 넣는다 (같은 표제어 · 다른 뜻은 §4 처럼 별개 카드) |
 | `drop(level)` | **W 종류일 때만** 뺀다. A · B · C 는 빈도가 높아도 넣는다 — 논문 속 뜻이 다르기 때문이다 |
 | `keep` | 넣는다 |
 
@@ -161,7 +190,7 @@ python3 <스킬경로>/assets/export.py papers/<citekey>/vocab/cards.csv --no-ex
 | 파일 | 용도 | 형식 |
 |---|---|---|
 | `quizlet.txt` | Quizlet 가져오기에 붙여넣기 | 앞뒤 구분 탭, 카드 구분 줄바꿈. 뒷면은 `뜻 ｜ "예문" ｜ 앵커` 한 줄 |
-| `anki.txt` | Anki 파일 → 가져오기 | 헤더(`#separator:tab` · `#html:true` · `#notetype:Basic` · `#deck:Papers::<citekey>` · `#tags column:3`) + 앞면 · HTML 뒷면 · 태그. 태그는 citekey 와 종류(`term`·`shifted`·`phrase`·`general`) |
+| `anki.txt` | Anki 파일 → 가져오기 | 헤더(`#separator:tab` · `#html:true` · `#notetype:Basic` · `#deck:Vocab::<citekey>` · `#tags column:3`) + 앞면 · HTML 뒷면 · 태그. 태그는 citekey 와 종류(`term`·`shifted`·`phrase`·`general`). 책은 덱이 `Vocab::<key>::ch06` 이고 태그에 장이 붙는다 |
 | `cards.md` | 사람이 훑어보는 표 | 번호 · 종류 · 앞면 · 뜻 · 예문 · 앵커 |
 
 스크립트가 탭과 줄바꿈을 공백으로 바꾸고, Anki 쪽은 HTML 이스케이프를 한다. 다른 앱이
@@ -171,10 +200,11 @@ python3 <스킬경로>/assets/export.py papers/<citekey>/vocab/cards.csv --no-ex
 
 산출 전에 아래를 확인하고, 실패한 카드는 고치거나 뺀다.
 
-- [ ] 모든 카드에 앵커가 있고, 그 쪽에 예문이 실제로 있다 (`grep` 으로 대조)
+- [ ] 모든 카드에 앵커가 있고, 그 쪽(책은 그 제목 아래)에 예문이 실제로 있다 (`grep` 으로 대조)
 - [ ] 뜻을 예문에 넣어 읽었을 때 문장이 성립한다
 - [ ] 같은 표제어가 같은 뜻으로 두 번 나오지 않는다
 - [ ] `drop(known)` 판정을 받은 표제어가 없고, `drop(level)` 을 받은 W 가 없다
+- [ ] 책이면 `drop(seen:…)` 을 받고도 남긴 카드는 앞 장 카드와 뜻이 다르다
 - [ ] `export.py` 가 오류 없이 끝났고, 출력한 장 수가 `cards.csv` 의 행 수와 같다
 - [ ] `[논문 밖]` 표시가 필요한 카드에 빠짐없이 붙어 있다
 
@@ -220,6 +250,7 @@ Quizlet 은 학습 기록을 내보낼 수 없어서 사용자가 틀린 단어�
 2. 한 줄에 하나씩 `missed.txt` 로 쓰고 반영한다. 다 맞혔으면 빈 파일을 쓴다.
    ```bash
    python3 <스킬경로>/assets/known.py update papers/<citekey>/vocab/cards.csv missed.txt
+   # 책: papers/<key>/vocab/ch06/cards.csv
    ```
 3. 스크립트가 하는 일:
    - 틀린 표제어: 연속 정답 0 으로 되돌리고 `hard.txt` 에 넣는다. `known.txt` 에 있었으면 뺀다
@@ -231,7 +262,7 @@ Quizlet 은 학습 기록을 내보낼 수 없어서 사용자가 틀린 단어�
 
 ## 추후 확장 (아직 구현하지 않음)
 
-- **Anki 복습 기록 연동**: AnkiConnect 애드온(`localhost:8765`)으로 `deck:Papers::*`
+- **Anki 복습 기록 연동**: AnkiConnect 애드온(`localhost:8765`)으로 `deck:Vocab::*`
   카드의 복습 간격과 실패 횟수를 읽는다. 간격 21일 이상 → `known.txt`, 실패 3회 이상 →
   `hard.txt`. `known.py` 에 `anki` 하위 명령으로 넣는다.
 - **세션 안 퀴즈**: 카드를 대화로 한 문제씩 내고 결과를 `stats.csv` 에 같은 규칙으로 쌓는다.

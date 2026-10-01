@@ -1,4 +1,4 @@
-# paper-vocab 스펙 (v0.1)
+# reading-vocab 스펙 (v0.2)
 
 논문 한 편에서 **영어 단어**를 외우는 스킬. 개념 이해는 `paper-tutor` 가, 구현은
 `paper-lab` 이 맡고, 이 스킬은 논문을 영어로 읽는 데 막히는 단어를 카드로 만든다.
@@ -31,16 +31,23 @@
 
 | # | 항목 | 결정 |
 |---|---|---|
-| 1 | 이름 | `paper-vocab`. 처음 이름은 `paper-quizlet` 이었으나 Anki 를 지원하며 바꿈 |
+| 1 | 이름 | `reading-vocab`. `paper-quizlet` → `paper-vocab`(Anki 지원) → `reading-vocab`(책 원문 지원, v0.2) |
 | 2 | 단어 종류 | A 전문 용어 · B 뜻이 바뀌는 학술 어휘 · C 학술 표현 · W 일반 어휘 |
 | 3 | 카드 방향 | 영어 → 한국어 |
 | 4 | 뒷면 | 뜻 + 예문 + 앵커. `--no-example` 로 뜻만 (Quizlet 쓰기 모드용) |
 | 5 | 카드 수 | 상한 없음. 행 순서가 우선순위 |
-| 6 | 세트 단위 | 논문당 한 세트 |
+| 6 | 세트 단위 | 논문당 한 세트. 책은 장마다 한 세트 (v0.2) |
 | 7 | 기본 분야 | AI·머신러닝 (NLP·RAG 포함) |
 | 8 | 수준 기준 | 수준 테스트(zipf 5구간 × 5문제, 4/5 이상 통과). 없으면 zipf 5.0. **W 에만 적용** |
 | 9 | 학습 결과 반영 | Quizlet 틀린 단어 붙여넣기. 2회 연속 정답 → known, 오답 → hard |
 | 10 | 원본 형식 | `cards.csv` (열 분리). 앱 파일은 `export.py` 산출 |
+| 11 | 책 원문 (v0.2) | 장별 Markdown. `mdtext.py` 로 평문화, 앵커는 `ch06 §제목` |
+| 12 | 장 사이 중복 (v0.2) | `filter --seen` 이 같은 책 다른 장 덱의 표제어를 `drop(seen:chNN)` 으로 판정. 다른 뜻이면 남긴다 |
+
+v0.2 에서 책을 별도 스킬로 떼지 않고 이름만 `reading-vocab` 으로 바꾼 이유: 달라지는 것은
+원문 형식과 앵커뿐이고, 책을 떼면 known 목록이 둘로 갈린다. 산출물 루트 `papers/` 는
+`paper-tutor` · `paper-lab` 과 공유하므로 그대로 두고, 책도 `papers/<key>/` 에 둔다.
+Anki 덱 접두어는 `Vocab::` 에서 `Vocab::` 으로 바꿨다(실사용 덱이 생기기 전).
 
 ## 5. 세 모드
 
@@ -80,7 +87,8 @@ papers/
 |---|---|
 | `SKILL.md` | 세 모드의 절차와 형식 |
 | `assets/export.py` | `cards.csv` → 앱 파일 세 개 |
-| `assets/known.py` | `sample` · `filter` · `update` · `level` |
+| `assets/known.py` | `sample` · `filter`(`--seen`) · `update` · `level` |
+| `assets/mdtext.py` | 장별 Markdown → 제목 앵커 달린 평문 (v0.2) |
 
 ## 9. 완성 확인
 
@@ -90,3 +98,6 @@ papers/
 - [x] `known.py filter` 가 hard · known · level 판정을 구분
 - [ ] Quizlet · Anki 에 실제로 가져와 확인
 - [ ] 실제 논문 한 편으로 `level` → `cards` → `result` 한 바퀴
+- [x] 실제 책 한 권(*Evals for AI Engineers*, 0~12장)으로 `level` → `cards`. 2,033장. `result` 는 아직
+- [x] `mdtext.py` 가 *Evals for AI Engineers* 13개 장에서 frontmatter · 코드 · 이미지 캡션을 지우고 제목 앵커를 단다
+- [x] `export.py` 가 `vocab/<unit>/cards.csv` 에서 덱 `Vocab::<key>::<unit>` 을 쓰고, `known.py filter --seen` 이 다른 장 표제어를 뺀다

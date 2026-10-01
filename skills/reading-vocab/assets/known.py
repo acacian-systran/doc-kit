@@ -8,6 +8,7 @@
 
   uv run --with wordfreq python known.py sample                  # 수준 테스트 후보
   uv run --with wordfreq python known.py filter cands.txt        # 후보 중 뺄 것 판정
+      --seen papers/<key>/vocab/ch06   책의 다른 장 덱에 이미 있는 표제어도 판정 (drop(seen:ch02))
   python3 known.py update papers/<citekey>/vocab/cards.csv missed.txt   # 학습 결과 반영
   python3 known.py level 4.0                                     # 기준 저장
 """
@@ -48,8 +49,22 @@ def cmd_sample(a):
         print(f"[{lo}] " + " ".join(rng.sample(pool, min(a.n, len(pool)))))
 
 
+def seen_terms(unit_dir):
+    """같은 책의 다른 장 덱(vocab/<unit>/cards.csv)에 있는 표제어 → 장 이름"""
+    seen = {}
+    me = unit_dir.resolve()
+    for p in sorted(me.parent.glob("*/cards.csv")):
+        if p.parent == me:
+            continue
+        with open(p, newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                seen.setdefault(r["term"].strip().lower(), p.parent.name)
+    return seen
+
+
 def cmd_filter(a):
     known, hard, lv = read_set(a.papers / "known.txt"), read_set(a.papers / "hard.txt"), level(a.papers)
+    seen = seen_terms(a.seen) if a.seen else {}
     print(f"# drop(level): zipf {lv} 이상. W 종류에만 적용한다")
     for line in Path(a.cands).read_text(encoding="utf-8").splitlines():
         w = line.strip().lower()
@@ -60,6 +75,8 @@ def cmd_filter(a):
             verdict = "keep(hard)"
         elif w in known:
             verdict = "drop(known)"
+        elif w in seen:
+            verdict = f"drop(seen:{seen[w]})"
         elif z >= lv:
             verdict = "drop(level)"
         else:
@@ -68,7 +85,8 @@ def cmd_filter(a):
 
 
 def cmd_update(a):
-    papers = Path(a.cards).resolve().parents[2]
+    vocab = next(p for p in Path(a.cards).resolve().parents if p.name == "vocab")
+    papers = vocab.parent.parent  # papers/<key>/vocab/[<unit>/]cards.csv
     with open(a.cards, newline="", encoding="utf-8") as f:
         terms = [r["term"].strip().lower() for r in csv.DictReader(f)]
     missed = read_set(Path(a.missed))
@@ -115,7 +133,7 @@ def main():
     ap.add_argument("--papers", type=Path, default=Path("papers"))
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("sample"); s.add_argument("-n", type=int, default=15); s.add_argument("--seed", type=int)
-    s = sub.add_parser("filter"); s.add_argument("cands")
+    s = sub.add_parser("filter"); s.add_argument("cands"); s.add_argument("--seen", type=Path)
     s = sub.add_parser("update"); s.add_argument("cards"); s.add_argument("missed")
     s = sub.add_parser("level"); s.add_argument("value", type=float, choices=BANDS + [9.0])
     a = ap.parse_args()

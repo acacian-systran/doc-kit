@@ -47,7 +47,7 @@ papers/<citekey>/           # citekey = 제1저자성-연도-제목첫단어 (va
     paper.txt               # pdftext.py 출력. [[p.N]] 앵커
     glossary.md · qa.md · note.md · quiz.md
   lab/                      # `paper-lab` 의 구현·실험. 이 스킬은 건드리지 않는다
-  vocab/                    # `paper-vocab` 의 단어 카드. 이 스킬은 건드리지 않는다
+  vocab/                    # `reading-vocab` 의 단어 카드. 이 스킬은 건드리지 않는다
 ```
 
 사용자가 경로를 말하지 않으면 이 규칙으로 쓰고 경로를 알린다. 묻지 않는다.
