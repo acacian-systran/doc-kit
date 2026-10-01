@@ -172,6 +172,7 @@ papers/<citekey>/                # citekey = 제1저자성-연도-제목첫단�
     note.md                      # read
     quiz.md                      # quiz
   lab/                           # `paper-lab` 의 구현·실험
+  vocab/                         # `paper-vocab` 의 단어 카드
 ```
 
 v0.2 까지는 `notes/papers/<citekey>/` 였다. `paper-lab` 과 루트를 공유하기 위해
