@@ -11,6 +11,7 @@ skills/
   paper-tutor/                  # 단독
   paper-lab/                    # 단독
   reading-vocab/                # 단독
+  w2ho/                         # 단독
   korean-report/                # 번들 — 짝으로 쓰는 스킬 묶음
     korean-report-style/
     korean-report-doc/
@@ -26,6 +27,7 @@ skills/
 | `paper-tutor`         | 논문 공부 — 읽기 전 용어집(prep) · 원문 앵커 Q&A(ask) · 메커니즘 중심 노트(read) · 대화형 퀴즈(quiz) | 단독 |
 | `paper-lab`           | 논문 구현 — 구현 가치 판정(gate) · 주장 표와 예산(plan) · 성질 검사(build) · 축소 재현과 절제(run) · 격차 분석(gap) | 단독 |
 | `reading-vocab`       | 논문 · 책(장별 Markdown) 단어 카드 — 원문 속 뜻 하나만 담은 Quizlet · Anki 덱(cards) · 어휘 수준 테스트(level) · 학습 결과로 아는 단어 줄이기(result) | 단독 |
+| `w2ho`                | 논리적 말하기·글쓰기 — Why → What → How → Opinion 구조로 면접 답변·보고·발표·문서를 짜고(write) · 진단해 고치고(review) · 한 문제씩 연습(drill), 청중에 따라 How 깊이 조절 | 단독 |
 | `korean-report-style` | 한국어 보고 문서의 문체·프레이밍 규약, AI 문투 검출 (문장 담당) | korean-report |
 | `korean-report-doc`   | 한국어 기술 문서를 자립형 HTML/PDF로 제작 (템플릿·도해 담당) | korean-report |
 
