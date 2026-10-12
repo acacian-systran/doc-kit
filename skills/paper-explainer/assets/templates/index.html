@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__SHORT__</title>
+<link rel="stylesheet" href="common/site.css">
+</head>
+<body data-section="overview">
+<div class="layout">
+  <aside class="minimap" id="minimap"></aside>
+  <main class="page wide">
+    <header class="page-head">
+      <p class="crumb">__CITATION__</p>
+      <h1>__TITLE_KO__</h1>
+      <p class="anchor">원문: __SOURCE__ · 읽은 범위: __RANGE__</p>
+    </header>
+
+    <section class="reveal">
+      <h2>한 화면 요약</h2>
+      <!-- 문제 · 핵심 아이디어 · 주요 결과를 각각 2~4문장. 수치에는 앵커. -->
+    </section>
+
+    <section>
+      <h2>논문의 흐름</h2>
+      <p>각 단계 아래의 섹션을 누르면 해설로 간다. 해설 페이지마다 왼쪽(모바일은 위쪽)에 이 흐름이 축소되어 따라다닌다.</p>
+      <ol id="flow"></ol>
+    </section>
+
+    <section class="reveal">
+      <h2>읽는 법</h2>
+      <!-- 어떤 순서로 읽으면 좋은지, 건너뛰어도 되는 섹션이 있으면 여기에. -->
+    </section>
+
+    <nav class="pager" id="pager"></nav>
+  </main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/contrib/auto-render.min.js"></script>
+<script src="common/sections.js"></script>
+<script src="common/site.js"></script>
+</body>
+</html>

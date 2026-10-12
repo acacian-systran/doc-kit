@@ -11,6 +11,7 @@ skills/
   explain-ladder/               # 단독
   paper-tutor/                  # 단독
   paper-lab/                    # 단독
+  paper-explainer/              # 단독
   reading-vocab/                # 단독
   w2ho/                         # 단독
   korean-report/                # 번들 — 짝으로 쓰는 스킬 묶음
@@ -28,14 +29,15 @@ skills/
 | `explain-ladder`      | 검토자의 질문에 답하는 가장 단순한 포맷을 골라 설명 — 글(STE) → Mermaid → 인터랙티브 HTML → Manim 영상(요청 시), 끝에 확인된 사실·추론·불확실 구분 | 단독 |
 | `paper-tutor`         | 논문 공부 — 읽기 전 용어집(prep) · 원문 앵커 Q&A(ask) · 메커니즘 중심 노트(read) · 대화형 퀴즈(quiz) | 단독 |
 | `paper-lab`           | 논문 구현 — 구현 가치 판정(gate) · 주장 표와 예산(plan) · 성질 검사(build) · 축소 재현과 절제(run) · 격차 분석(gap) | 단독 |
+| `paper-explainer`     | 논문 해설 사이트 — Overview 흐름도 + 챕터·하위 챕터별 페이지, 모든 페이지에 현재 위치를 강조한 고정 미니맵 · 단계 풀이 | 단독 |
 | `reading-vocab`       | 논문 · 책(장별 Markdown) 단어 카드 — 원문 속 뜻 하나만 담은 Quizlet · Anki 덱(cards) · 어휘 수준 테스트(level) · 학습 결과로 아는 단어 줄이기(result) | 단독 |
 | `w2ho`                | 논리적 말하기·글쓰기 — Why → What → How → Opinion 구조로 면접 답변·보고·발표·문서를 짜고(write) · 진단해 고치고(review) · 한 문제씩 연습(drill), 청중에 따라 How 깊이 조절 | 단독 |
 | `korean-report-style` | 한국어 보고 문서의 문체·프레이밍 규약, AI 문투 검출 (문장 담당) | korean-report |
 | `korean-report-doc`   | 한국어 기술 문서를 자립형 HTML/PDF로 제작 (템플릿·도해 담당) | korean-report |
 
-`paper-tutor` · `paper-lab` · `reading-vocab` 은 산출물 루트를 공유한다 — 논문 하나가
-`papers/<citekey>/` 이고 그 아래 `study/`(읽기) · `lab/`(구현) · `vocab/`(단어 카드)로 갈린다.
-`reading-vocab` 은 `paper-tutor` 의 `pdftext.py` 를 함께 쓰므로 두 스킬을 같이 설치한다.
+`paper-tutor` · `paper-lab` · `reading-vocab` · `paper-explainer` 는 산출물 루트를 공유한다 — 논문 하나가
+`papers/<citekey>/` 이고 그 아래 `study/`(읽기) · `lab/`(구현) · `vocab/`(단어 카드) · `site/`(해설 사이트)로 갈린다.
+`reading-vocab` · `paper-explainer` 는 `paper-tutor` 의 `pdftext.py` 를 함께 쓰므로 두 스킬을 같이 설치한다.
 
 ## 설치
 

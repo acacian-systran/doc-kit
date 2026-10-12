@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__ID__ __TITLE__ · __SHORT__</title>
+<link rel="stylesheet" href="common/site.css">
+</head>
+<body data-section="__ID__">
+<div class="layout">
+  <aside class="minimap" id="minimap"></aside>
+  <main class="page">
+    <header class="page-head">
+      <p class="crumb" data-auto="crumb"></p>
+      <h1>__ID__ __TITLE__</h1>
+      <p class="question">__QUESTION__</p>
+      <p class="anchor">원문: __ANCHOR__</p>
+    </header>
+
+    <p class="bridge"><strong>앞에서</strong> — __FROM__</p>
+
+    <!-- 본문. references/page.md 의 구성과 references/motion.md 의 부품을 쓴다. -->
+
+    <p class="bridge"><strong>다음에서</strong> — __TO__</p>
+
+    <nav class="pager" id="pager"></nav>
+  </main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/contrib/auto-render.min.js"></script>
+<script src="common/sections.js"></script>
+<script src="common/site.js"></script>
+</body>
+</html>
