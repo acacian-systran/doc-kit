@@ -13,6 +13,7 @@ skills/
   paper-lab/                    # 단독
   paper-explainer/              # 단독
   reading-vocab/                # 단독
+  book-reader/                  # 단독
   w2ho/                         # 단독
   korean-report/                # 번들 — 짝으로 쓰는 스킬 묶음
     korean-report-style/
@@ -31,12 +32,15 @@ skills/
 | `paper-lab`           | 논문 구현 — 구현 가치 판정(gate) · 주장 표와 예산(plan) · 성질 검사(build) · 축소 재현과 절제(run) · 격차 분석(gap) | 단독 |
 | `paper-explainer`     | 논문 해설 사이트 — Overview 흐름도 + 챕터·하위 챕터별 페이지, 모든 페이지에 현재 위치를 강조한 고정 미니맵 · 단계 풀이 | 단독 |
 | `reading-vocab`       | 논문 · 책(장별 Markdown) 단어 카드 — 원문 속 뜻 하나만 담은 Quizlet · Anki 덱(cards) · 어휘 수준 테스트(level) · 학습 결과로 아는 단어 줄이기(result) | 단독 |
+| `book-reader`         | 장별 Markdown 책(O'Reilly 클리핑 등) → 원문 그대로의 정적 웹 리더 · 한영 병기판 · 드래그 단어 저장, 저장 단어는 `reading-vocab` 덱으로 넘김. 책마다 다른 것은 `book.json` 하나 | 단독 |
 | `w2ho`                | 논리적 말하기·글쓰기 — Why → What → How → Opinion 구조로 면접 답변·보고·발표·문서를 짜고(write) · 진단해 고치고(review) · 한 문제씩 연습(drill), 청중에 따라 How 깊이 조절 | 단독 |
 | `korean-report-style` | 한국어 보고 문서의 문체·프레이밍 규약, AI 문투 검출 (문장 담당) | korean-report |
 | `korean-report-doc`   | 한국어 기술 문서를 자립형 HTML/PDF로 제작 (템플릿·도해 담당) | korean-report |
 
-`paper-tutor` · `paper-lab` · `reading-vocab` · `paper-explainer` 는 산출물 루트를 공유한다 — 논문 하나가
-`papers/<citekey>/` 이고 그 아래 `study/`(읽기) · `lab/`(구현) · `vocab/`(단어 카드) · `site/`(해설 사이트)로 갈린다.
+`paper-tutor` · `paper-lab` · `reading-vocab` · `paper-explainer` · `book-reader` 는 산출물 루트를 공유한다 — 논문(책) 하나가
+`papers/<citekey>/` 이고 그 아래 `study/`(읽기) · `lab/`(구현) · `vocab/`(단어 카드) · `site/`(해설 사이트) · `reader/`(웹 리더)로 갈린다.
+`book-reader` 의 Words 서랍이 내보낸 `<key>-picked-*.csv` 는 `reading-vocab` 의 `picked` 모드가 받는다.
+`book-reader` 는 Node 의존성이 있어 처음 한 번 `npm ci --prefix skills/book-reader/assets` 가 필요하다.
 `reading-vocab` · `paper-explainer` 는 `paper-tutor` 의 `pdftext.py` 를 함께 쓰므로 두 스킬을 같이 설치한다.
 
 ## 설치

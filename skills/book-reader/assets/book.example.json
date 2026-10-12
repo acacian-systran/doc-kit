@@ -1,0 +1,14 @@
+{
+  "key": "shankar-2026-evals",
+  "title": "Evals for AI Engineers",
+  "authors": "Shreya Shankar & Hamel Husain",
+  "kicker": "O'Reilly · Early Release",
+  "store": "evr",
+  "sourceUrl": "https://learning.oreilly.com/library/view/evals-for-ai/9798341660717/",
+  "editions": {
+    "en": { "src": "~/Documents/Obsidian Vault/oreilly/Evals for AI Engineers", "out": "site" },
+    "ko": { "src": "~/Documents/Obsidian Vault/참고자료/OREILLY/Evals for AI Engineers", "out": "site-ko", "bilingual": true }
+  },
+  "texFixes": [["\\)\\s*(\\\\text\\{[A-Z]+\\}\\s*=)", ")\\\\ $1"]],
+  "esh": "esh.yaml"
+}

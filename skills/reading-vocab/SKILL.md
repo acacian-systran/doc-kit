@@ -1,6 +1,6 @@
 ---
 name: reading-vocab
-description: Turn an academic paper — or a technical book chapter in Markdown (O'Reilly · web clippings · Obsidian notes) — into a flashcard deck (Quizlet · Anki) whose meanings are the ones the source actually uses — technical terms kept as English headwords with a one-line definition, academic words whose in-text sense differs from the everyday sense, recurring academic phrases, and general words above the learner's level — each card carrying the source sentence and a page or section anchor. A book gets one deck per chapter, and a term already carded in another chapter is not repeated. Writes one source file (cards.csv) and exports it to Quizlet paste text, an Anki import file, and a review table. Keeps a shared known-word list that shrinks future decks, set by a one-time vocabulary level test and updated from pasted Quizlet results. Use whenever the user hands over a paper (PDF, arXiv link, or pasted text) or a book/chapter Markdown file or folder and asks for 단어장 · 단어 카드 · 퀴즐렛 · Quizlet · Anki · 논문 어휘 · 논문 단어 외우기 · 책 단어 · 원서 단어장 · 플래시카드 · flashcards, or asks for 어휘 수준 테스트 · 틀린 단어 반영 · 아는 단어 빼줘. For a prerequisite glossary or concept study, use paper-tutor instead.
+description: Turn an academic paper — or a technical book chapter in Markdown (O'Reilly · web clippings · Obsidian notes) — into a flashcard deck (Quizlet · Anki) whose meanings are the ones the source actually uses — technical terms kept as English headwords with a one-line definition, academic words whose in-text sense differs from the everyday sense, recurring academic phrases, and general words above the learner's level — each card carrying the source sentence and a page or section anchor. A book gets one deck per chapter, and a term already carded in another chapter is not repeated. Writes one source file (cards.csv) and exports it to Quizlet paste text, an Anki import file, and a review table. Keeps a shared known-word list that shrinks future decks, set by a one-time vocabulary level test and updated from pasted Quizlet results. Also takes the words a reader picked while reading — the picked.csv that book-reader's Words drawer exports — fills in the sense each one has in the book, adds them to that chapter's deck and marks them hard. Use whenever the user hands over a paper (PDF, arXiv link, or pasted text) or a book/chapter Markdown file or folder and asks for 단어장 · 단어 카드 · 퀴즐렛 · Quizlet · Anki · 논문 어휘 · 논문 단어 외우기 · 책 단어 · 원서 단어장 · 플래시카드 · flashcards, or asks for 어휘 수준 테스트 · 틀린 단어 반영 · 아는 단어 빼줘, or hands over a `*-picked-*.csv` and asks 이 단어들 덱에 넣어줘 · 저장한 단어 카드로. For a prerequisite glossary or concept study, use paper-tutor instead.
 ---
 
 # 논문 · 책 → 단어 카드 (Quizlet · Anki)
@@ -20,6 +20,7 @@ description: Turn an academic paper — or a technical book chapter in Markdown 
 | `cards` | 논문을 주며 단어장·카드를 요청. 기본 모드 | §2 ~ §7 |
 | `level` | 수준 테스트 요청, 또는 `papers/level.txt` 가 없는 채로 처음 `cards` 를 요청 | §8 |
 | `result` | Quizlet 에서 틀린 단어를 붙여넣음 | §9 |
+| `picked` | `book-reader` 의 Words 서랍에서 내려받은 `<key>-picked-<날짜>.csv` 를 줌 | §10 |
 
 `level.txt` 가 없을 때 `cards` 를 요청받으면 "수준 테스트(25문제, 5분)를 먼저 할지, 기초
 단어만 빼고 바로 만들지" 한 줄로 묻는다. 바로 만들기를 고르면 기본 기준(§3.3)으로 진행한다.
@@ -257,6 +258,41 @@ Quizlet 은 학습 기록을 내보낼 수 없어서 사용자가 틀린 단어�
    - 맞힌 표제어: 연속 정답 +1. **2회 연속**이면 `known.txt` 로 옮기고 `hard.txt` 에서 뺀다
 4. 이 덱 자체는 다시 만들지 않는다. `known` 으로 옮겨진 단어는 다음 논문부터 빠진다.
    사용자가 이 덱에서도 빼 달라고 하면 `cards.csv` 에서 지우고 `export.py` 를 다시 돌린다.
+
+## 10. `picked` — 읽다가 고른 단어
+
+`book-reader` 로 책을 읽다가 드래그해 저장한 단어를 덱에 넣는다. 사용자가 고른 단어는
+**읽다가 막힌 단어**이므로 §3 의 고르기를 거치지 않는다. 뜻 · 검수 · 형식은 그대로 따른다.
+
+입력 `<key>-picked-<날짜>.csv` 의 열:
+
+| 열 | 내용 |
+|---|---|
+| `book` | `papers/<key>` 의 key |
+| `term` | 드래그한 그대로. 굴절형 · 대문자가 섞여 있을 수 있다 |
+| `meaning` | 사용자가 적은 뜻. 빈칸일 수 있다 |
+| `sentence` | 원문 문장 |
+| `ko` | 이중 언어판이면 대응 번역 문장. 근거로 쓰지 않는다 (§2.1) |
+| `anchor` | `ch03 §Section` — `cards.csv` 의 앵커 형식 그대로 |
+| `added` | 저장한 날짜 |
+
+1. `anchor` 앞의 장으로 행을 나눈다. 덱은 `papers/<key>/vocab/<장>/cards.csv` 이고, 없으면 헤더만
+   있는 파일로 만든다. 원문(`study/<장>.txt`)이 없으면 §2.1 로 먼저 뽑는다 — 예문 대조에 쓴다.
+2. 행마다 `term` 을 표제어로 정리한다(소문자 원형, 구는 구 전체). 종류(§3.1)를 정하고, **`sentence`
+   에서 성립하는 뜻**을 §4 로 적는다. 사용자가 적은 `meaning` 은 출발점일 뿐이다. 원문 뜻과
+   어긋나면 원문 뜻을 쓰고, 응답에 `term: 적은 뜻 → 원문 뜻` 으로 따로 알린다.
+3. 같은 덱에 같은 표제어 · 같은 뜻이 이미 있으면 건너뛴다. 뜻이 다르면 별개 카드로 넣는다.
+   `known` · `level` · `seen` 판정(§3.3)으로 빼지 **않는다** — 골랐다는 것이 모른다는 표시다.
+4. 고른 카드는 덱의 **맨 앞**에 넣는다(§3.2 의 1순위와 같은 자리). `example` 은 `sentence` 를
+   30단어 이내로 줄인 것, `anchor` 는 입력 그대로다.
+5. 표제어를 한 줄에 하나씩 `picked.txt` 로 써서 반영하고, 덱마다 내보낸다.
+   ```bash
+   python3 <스킬경로>/assets/known.py --papers papers picked picked.txt   # hard 에 넣고 known 에서 뺀다
+   python3 <스킬경로>/assets/export.py papers/<key>/vocab/ch03/cards.csv
+   ```
+6. 응답은 §7 과 같고, 장별로 추가한 카드 수 · 건너뛴 수 · 뜻을 바로잡은 표제어를 덧붙인다.
+
+브라우저의 저장 목록은 그대로 남는다. 다음 내보내기에 같은 단어가 또 들어와도 3 에서 걸러진다.
 
 ---
 

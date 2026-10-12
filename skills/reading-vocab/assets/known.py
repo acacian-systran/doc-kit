@@ -10,6 +10,7 @@
   uv run --with wordfreq python known.py filter cands.txt        # 후보 중 뺄 것 판정
       --seen papers/<key>/vocab/ch06   책의 다른 장 덱에 이미 있는 표제어도 판정 (drop(seen:ch02))
   python3 known.py update papers/<citekey>/vocab/cards.csv missed.txt   # 학습 결과 반영
+  python3 known.py picked terms.txt                              # 읽다가 직접 고른 단어 → hard
   python3 known.py level 4.0                                     # 기준 저장
 """
 import argparse, csv, random, re, sys
@@ -122,6 +123,17 @@ def cmd_update(a):
     print(f"틀림 {len(missed)} · 맞힘 {len(terms) - len(missed)} · known 으로 이동 {len(promoted)}: {' '.join(promoted)}")
 
 
+def cmd_picked(a):
+    # 읽다가 막혀서 고른 단어는 모른다는 뜻이다. 연속 정답 기록은 건드리지 않는다
+    picked = read_set(Path(a.terms))
+    known, hard = read_set(a.papers / "known.txt"), read_set(a.papers / "hard.txt")
+    unknown_again = sorted(picked & known)
+    a.papers.mkdir(parents=True, exist_ok=True)
+    write_set(a.papers / "known.txt", known - picked)
+    write_set(a.papers / "hard.txt", hard | picked)
+    print(f"hard 에 {len(picked - hard)} 개 추가 · known 에서 뺌 {len(unknown_again)}: {' '.join(unknown_again)}")
+
+
 def cmd_level(a):
     a.papers.mkdir(parents=True, exist_ok=True)
     (a.papers / "level.txt").write_text(f"{a.value}\n")
@@ -135,9 +147,10 @@ def main():
     s = sub.add_parser("sample"); s.add_argument("-n", type=int, default=15); s.add_argument("--seed", type=int)
     s = sub.add_parser("filter"); s.add_argument("cands"); s.add_argument("--seen", type=Path)
     s = sub.add_parser("update"); s.add_argument("cards"); s.add_argument("missed")
+    s = sub.add_parser("picked"); s.add_argument("terms")
     s = sub.add_parser("level"); s.add_argument("value", type=float, choices=BANDS + [9.0])
     a = ap.parse_args()
-    {"sample": cmd_sample, "filter": cmd_filter, "update": cmd_update, "level": cmd_level}[a.cmd](a)
+    {"sample": cmd_sample, "filter": cmd_filter, "update": cmd_update, "picked": cmd_picked, "level": cmd_level}[a.cmd](a)
 
 
 if __name__ == "__main__":
