@@ -8,6 +8,7 @@
 skills/
   mermaid-diagram/              # 단독
   explain-diff-html/            # 단독
+  explain-ladder/               # 단독
   paper-tutor/                  # 단독
   paper-lab/                    # 단독
   reading-vocab/                # 단독
@@ -24,6 +25,7 @@ skills/
 |------|------|------|
 | `mermaid-diagram`     | 아키텍처·순서·상태·ER·일정 그림을 Mermaid 소스로 그려 SVG 로 렌더 | 단독 |
 | `explain-diff-html`   | 코드 변경(diff/PR)을 한국어 인터랙티브 HTML 문서로 설명 | 단독 |
+| `explain-ladder`      | 검토자의 질문에 답하는 가장 단순한 포맷을 골라 설명 — 글(STE) → Mermaid → 인터랙티브 HTML → Manim 영상(요청 시), 끝에 확인된 사실·추론·불확실 구분 | 단독 |
 | `paper-tutor`         | 논문 공부 — 읽기 전 용어집(prep) · 원문 앵커 Q&A(ask) · 메커니즘 중심 노트(read) · 대화형 퀴즈(quiz) | 단독 |
 | `paper-lab`           | 논문 구현 — 구현 가치 판정(gate) · 주장 표와 예산(plan) · 성질 검사(build) · 축소 재현과 절제(run) · 격차 분석(gap) | 단독 |
 | `reading-vocab`       | 논문 · 책(장별 Markdown) 단어 카드 — 원문 속 뜻 하나만 담은 Quizlet · Anki 덱(cards) · 어휘 수준 테스트(level) · 학습 결과로 아는 단어 줄이기(result) | 단독 |
