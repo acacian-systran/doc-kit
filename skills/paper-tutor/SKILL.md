@@ -167,7 +167,7 @@ arXiv 는 `arxiv.org/pdf/<id>` 를 받는다. abs 는 초록 페이지다. HTML 
 ## 6. 다른 스킬과의 관계
 
 - **문체** — `korean-report-style`. 산출 파일은 보고 문서다.
-- **HTML·PDF 산출** — `korean-report-doc`. 노트를 배포용으로 만들 때만. 파일 자체는
+- **배포용 산출** — 노트를 남에게 보여야 할 때만 Artifact 페이지로 게시한다. 파일 자체는
   마크다운으로 남긴다 — 나중에 grep 해서 다시 찾는다.
 - **구조 그림** — `mermaid-diagram`. 아키텍처를 그려야 이해되는 논문일 때.
 

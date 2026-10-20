@@ -196,7 +196,7 @@ v0.2 까지는 `notes/papers/<citekey>/` 였다. `paper-lab` 과 루트를 공�
 
 ## 9. 범위 밖
 
-- HTML·PDF 산출 — `korean-report-doc`
+- HTML·PDF 산출 — 배포용이 필요하면 Artifact 페이지로 게시한다
 - 논문 탐색·추천 — alphaXiv 등은 원문 확보에만
 - 여러 편 비교표 — v2
 - 여러 논문 공통 용어집 — v2

@@ -5,8 +5,7 @@ description: Korean prose conventions for documents that are saved or sent to so
 
 # 한국어 문서 문체
 
-파일로 남거나 다른 사람에게 보내는 한국어 문서의 문장 규약이다. 색·도해·HTML/PDF 제작은
-`korean-report-doc`이 맡는다.
+파일로 남거나 다른 사람에게 보내는 한국어 문서의 문장 규약이다. 색·도해·HTML/PDF 제작은 범위 밖이다.
 
 대화 답변, 발표 대본, 슬라이드의 읽는 노트, 코드 주석에는 적용하지 않는다. 말로 전하는 글은
 말의 리듬이 맞다.

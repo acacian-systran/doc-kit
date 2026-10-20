@@ -16,13 +16,11 @@ skills/
   book-reader/                  # 단독
   w2ho/                         # 단독
   method-atlas/                 # 단독
-  korean-report/                # 번들 — 짝으로 쓰는 스킬 묶음
-    korean-report-style/
-    korean-report-doc/
+  korean-report-style/          # 단독
 ```
 
 디렉터리가 한 단계 더 들어가 있으면 **번들**이다. 그 안의 스킬들은 서로를 전제하므로
-같이 설치한다. 번들 디렉터리의 README에 역할 분담이 적혀 있다.
+같이 설치한다. 번들 디렉터리의 README에 역할 분담이 적혀 있다. 지금은 번들이 없다.
 
 | 스킬 | 역할 | 묶음 |
 |------|------|------|
@@ -36,8 +34,7 @@ skills/
 | `book-reader`         | 장별 Markdown 책(O'Reilly 클리핑 등) → 원문 그대로의 정적 웹 리더 · 한영 병기판 · 드래그 단어 저장, 저장 단어는 `reading-vocab` 덱으로 넘김. 책마다 다른 것은 `book.json` 하나 | 단독 |
 | `w2ho`                | 논리적 말하기·글쓰기 — Why → What → How → Opinion 구조로 면접 답변·보고·발표·문서를 짜고(write) · 진단해 고치고(review) · 한 문제씩 연습(drill), 청중에 따라 How 깊이 조절 | 단독 |
 | `method-atlas`        | 기법 비교 지도 — 문제 하나와 그 해결 기법들을 공통 예시 질문 · 같은 분류 축으로 비교하는 인터랙티브 페이지. 기법마다 구조도 · 단계별 입출력 · 쓸 때/안 쓸 때 예시 · 장단점과 한계 · 관계(선행·보완·대체·충돌·자원 공유), 필터 · 비교 · 요약 행렬 · 근거 · 용어집 탭. 데이터 파일 하나만 쓰고 엔진은 공용 | 단독 |
-| `korean-report-style` | 파일로 남기거나 보내는 한국어 문서의 문장 규약 — ASD-STE100에서 가져온 문장 원칙 · 편집 시 뜻 보존 · 상태와 위험의 정직한 서술 · AI 문투 검출 (문장 담당) | korean-report |
-| `korean-report-doc`   | 한국어 기술 문서를 자립형 HTML/PDF로 제작 (템플릿·도해 담당) | korean-report |
+| `korean-report-style` | 파일로 남기거나 보내는 한국어 문서의 문장 규약 — ASD-STE100에서 가져온 문장 원칙 · 편집 시 뜻 보존 · 상태와 위험의 정직한 서술 · 외부 공유 점검 · AI 문투 검출 | 단독 |
 
 `paper-tutor` · `paper-lab` · `reading-vocab` · `paper-explainer` · `book-reader` 는 산출물 루트를 공유한다 — 논문(책) 하나가
 `papers/<citekey>/` 이고 그 아래 `study/`(읽기) · `lab/`(구현) · `vocab/`(단어 카드) · `site/`(해설 사이트) · `reader/`(웹 리더)로 갈린다.
@@ -63,8 +60,8 @@ Claude Code는 `.claude/skills/<name>/SKILL.md` 한 단계만 스캔하므로, �
 통째로 링크하면 스킬을 찾지 못한다.
 
 ```bash
-ln -s ~/projects/doc-kit/skills/korean-report/korean-report-doc \
-      ~/.claude/skills/korean-report-doc
+ln -s ~/projects/doc-kit/skills/korean-report-style \
+      ~/.claude/skills/korean-report-style
 ```
 
 ## 스킬 추가하기
