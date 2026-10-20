@@ -4,7 +4,6 @@ lint.py — 한국어 보고 문서의 문체 규약 검사기.
 
     python lint.py 보고서.md
     python lint.py dist/보고서.html --json
-    python lint.py 초안.md --fix
     python lint.py 보고서.md --heuristic
     python lint.py 보고서.md --format github
     python lint.py 보고서.md --format sarif
@@ -12,9 +11,8 @@ lint.py — 한국어 보고 문서의 문체 규약 검사기.
 치환 규칙은 `references/substitutions.md`, 문맥 의존 heuristic은
 `references/software-handoff.md`에서 읽는다. 규칙을 코드에 중복하지 않는다.
 
-기본 검사는 네 갈래로 보고한다.
+검사는 세 갈래로 보고하며 자동으로 고치지 않는다.
 
-    고침   기계적으로 교정할 수 있는 어미
     검토   문맥을 보고 선택하는 치환 규칙
     제목   서술형·의문형·관형절형 제목
     의심   --heuristic에서만 활성화되는 collocation
@@ -71,12 +69,11 @@ TEACHING_HEADERS = {
     ("기존 표현", "보고서 표현"),
 }
 
-FIX_SECTION = 1
 MIN_LEN = 2
 MIN_SPLIT_LEN = 3
 SCOPES = frozenset(("all", "prose", "heading", "table", "html"))
 MATCHERS = frozenset(("literal", "regex"))
-TIERS = ("고침", "검토", "제목", "의심")
+TIERS = ("검토", "제목", "의심")
 FORMATS = ("text", "json", "github", "sarif")
 
 
@@ -253,7 +250,7 @@ def _load_rule_file(path: pathlib.Path, tier_override: str | None = None) -> lis
             except re.error as exc:
                 raise SystemExit(f"잘못된 regex {pattern!r}: {path}: {exc}") from exc
 
-            tier = tier_override or ("고침" if section == FIX_SECTION else "검토")
+            tier = tier_override or "검토"
             rule_id = explicit_id or _generated_rule_id(section, pattern)
             rules.append({
                 "rule_id": rule_id,
@@ -263,9 +260,6 @@ def _load_rule_file(path: pathlib.Path, tier_override: str | None = None) -> lis
                 "tier": tier,
                 "scopes": scopes,
                 "match": match,
-                "fixable": (
-                    tier == "고침" and bool(suggest) and " · " not in suggest
-                ),
             })
     return rules
 
@@ -387,7 +381,7 @@ def _matches(rule: dict, line: str):
             yield match.start(), match.end(), match.group(0)
 
 
-# ── Lint and fix ──────────────────────────────────────────────
+# ── Lint ──────────────────────────────────────────────────
 
 def lint(text: str, name: str = "-", rules=None, html: bool = False) -> list[Finding]:
     rules = load_rules() if rules is None else rules
@@ -410,51 +404,12 @@ def lint(text: str, name: str = "-", rules=None, html: bool = False) -> list[Fin
                 continue
             if BAD_HEADING.search(title) or QUESTION_OPENER.match(title) or CLAUSAL_HEADING.search(title):
                 out.append(Finding(
-                    name, i, 1, "제목", "§1.1 제목은 명사구", title,
+                    name, i, 1, "제목", "§6 제목은 명사구", title,
                     "명사구로 고친다", title[:80], "KRS-1.1-HEADING", title,
                 ))
 
     out.sort(key=lambda f: (f.line, f.col, f.rule_id))
     return out
-
-
-def _replace_rule(raw: str, guard: str, rule: dict) -> tuple[str, str, int]:
-    hits = 0
-    start = 0
-    while True:
-        match = next(iter(_matches(rule, guard[start:])), None)
-        if match is None:
-            break
-        rel_start, rel_end, _matched = match
-        at, end = start + rel_start, start + rel_end
-        raw = raw[:at] + rule["suggest"] + raw[end:]
-        guard = guard[:at] + " " * len(rule["suggest"]) + guard[end:]
-        hits += 1
-        start = at + len(rule["suggest"])
-    return raw, guard, hits
-
-
-def fix(text: str, rules, html: bool = False) -> tuple[str, int]:
-    """고침 tier만 visible context에서 교정한다."""
-    contexts = {
-        line: (context, guard)
-        for line, context, guard in visible_segments(text, html)
-    }
-    lines = text.splitlines(keepends=True)
-    hits = 0
-
-    for n, raw in enumerate(lines):
-        segment = contexts.get(n + 1)
-        if segment is None:
-            continue
-        context, guard = segment
-        for rule in rules:
-            if not rule["fixable"] or not _applies(rule, context):
-                continue
-            raw, guard, count = _replace_rule(raw, guard, rule)
-            hits += count
-        lines[n] = raw
-    return "".join(lines), hits
 
 
 # ── Output ────────────────────────────────────────────────────
@@ -484,10 +439,9 @@ def report(found: list[Finding]) -> None:
     print("인용이 꼭 필요하면 백틱·「」로 감싸거나 줄 끝에 <!-- style-exempt --> 를 단다.")
 
 
-def json_payload(found: list[Finding], fixed: int) -> dict:
+def json_payload(found: list[Finding]) -> dict:
     return {
         "findings": [f.as_dict() for f in found],
-        "fixed": fixed,
         "summary": summarize(found),
     }
 
@@ -558,7 +512,6 @@ def main(argv=None) -> int:
     ap.add_argument("--format", choices=FORMATS, default="text", help="출력 형식")
     ap.add_argument("--heuristic", action="store_true", help="software collocation 의심 규칙 포함")
     ap.add_argument("--tier", choices=TIERS, action="append", help="이 갈래만 검사")
-    ap.add_argument("--fix", action="store_true", help="고침 tier를 파일에 직접 적용")
     args = ap.parse_args(argv)
 
     if args.json and args.format not in ("text", "json"):
@@ -567,8 +520,6 @@ def main(argv=None) -> int:
     include_heuristics = args.heuristic or bool(args.tier and "의심" in args.tier)
     rules = load_rules(include_heuristics=include_heuristics)
     found: list[Finding] = []
-    fixed = 0
-    fixed_paths = []
 
     for name in args.paths:
         if name == "-":
@@ -581,27 +532,18 @@ def main(argv=None) -> int:
             text = path.read_text(encoding="utf-8")
             html = path.suffix.lower() in (".html", ".htm")
 
-        if args.fix and name != "-":
-            text, count = fix(text, rules, html)
-            if count:
-                path.write_text(text, encoding="utf-8")
-                fixed += count
-                fixed_paths.append((str(path), count))
-
         found += lint(text, str(path), rules, html)
 
     if args.tier:
         found = [f for f in found if f.tier in args.tier]
 
     if output_format == "json":
-        print(json.dumps(json_payload(found, fixed), ensure_ascii=False, indent=2))
+        print(json.dumps(json_payload(found), ensure_ascii=False, indent=2))
     elif output_format == "github":
         report_github(found)
     elif output_format == "sarif":
         print(json.dumps(sarif_payload(found), ensure_ascii=False, indent=2))
     else:
-        for path, count in fixed_paths:
-            print(f"{path} — 어미 {count}곳을 고쳤다")
         report(found)
 
     return 1 if found else 0

@@ -55,7 +55,7 @@ API, enum, field, path, module과 실제 symbol은 backtick으로 원형을 보�
 | `조용히 통과한다` | 오류가 검출되지 않은 채 통과한다 |
 ## 4. AI 문투 collocation
 
-`SKILL.md` §1.9의 이항 대조와 봉합 접속이다. 정의를 세우는 자리에서는 정상 표현이므로
+`SKILL.md` §5의 이항 대조와 봉합 접속이다. 정의를 세우는 자리에서는 정상 표현이므로
 `의심` tier로만 보고하고, 한 문서에 반복될 때 교정 대상으로 판정한다.
 
 <!-- style-teaching -->
