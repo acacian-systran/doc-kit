@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>__TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+__CSS__
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1 id="h1"></h1>
+      <p class="lede" id="lede"></p>
+      <div class="q" id="q"></div>
+    </div>
+    <div class="legend" id="legend" aria-label="색 범례"></div>
+  </header>
+
+  <section class="board" aria-label="조건 필터">
+    <div class="board-head">
+      <h2>필터 조건 <span class="hint">· 해당 <span class="count" id="count"></span> / <span id="total"></span></span></h2>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span class="hint" id="active"></span>
+        <button class="reset" id="reset" type="button">조건 초기화</button>
+      </div>
+    </div>
+    <div class="groups" id="groups"></div>
+    <p class="crit" id="crit"></p>
+  </section>
+
+  <section class="work">
+    <nav class="list" id="list" aria-label="목록"></nav>
+    <div class="pane">
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="body" id="body"></div>
+    </div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+<script>
+__DATA__
+</script>
+<script>
+__ENGINE__
+</script>
+</body>
+</html>
