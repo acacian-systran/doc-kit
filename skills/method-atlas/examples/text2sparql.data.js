@@ -173,6 +173,7 @@ window.PAGE = {
    }
   ]
  },
+ "map": {"rows": "what", "cols": "stage", "title": "조회 대상 × 개입 시점", "lede": "무엇을 보고 언제 끼어드는지. 기법에 올리면 그 한계를 맡는 기법이 강조된다."},
  "compareDefault": [
   "T1",
   "T4",

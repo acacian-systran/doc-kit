@@ -278,3 +278,56 @@ ol.dsteps .no{width:20px;height:20px;border-radius:50%;background:var(--ink);col
 .tt{border-bottom:1px dotted var(--sub);cursor:help;position:relative}
 .tt::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:max-content;max-width:min(320px,80vw);white-space:normal;background:var(--ink);color:var(--onInk);font-size:12.5px;font-weight:400;line-height:1.5;padding:6px 10px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .12s}
 .tt:hover::after,.tt:focus-visible::after{opacity:1}
+
+/* 보기 설정 스위치 */
+.side{display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+.views{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-items:center;font-size:12.5px;color:var(--sub)}
+.views .vk{margin-right:2px}
+.vbtn{border:1px solid var(--line);background:var(--surface);color:var(--sub);border-radius:999px;padding:2px 10px;font-size:12.5px;cursor:pointer}
+.vbtn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--onInk);font-weight:600}
+
+/* 흐름 지도 — 행: 막는 문제, 열: 개입 시점. 기법 위에 올리면 그 한계를 맡는 기법이 강조된다 */
+.mapw{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.mapw h2{font-size:16px}
+.mapw .hint{font-size:13px;color:var(--sub)}
+.mapg{display:grid;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.mapg>div{padding:8px 10px;border-top:1px solid var(--line);border-left:1px solid var(--line);min-width:0}
+.mapg .mh{background:var(--soft);font-size:12.5px;font-weight:600;color:var(--sub);border-top:0}
+.mapg .mr{font-size:13px;font-weight:600;color:var(--sub);border-left:0;background:var(--soft)}
+.mapg .mc{display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+.mapg .mc.empty::before{content:"—";color:var(--faint);font-size:13px}
+.mapg .mh.pre{color:var(--preT);background:var(--pre)}
+.mapg .mh.mid{color:var(--midT);background:var(--mid)}
+.mapg .mh.post{color:var(--postT);background:var(--post)}
+.mnode{display:inline-flex;gap:5px;align-items:center;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:3px 8px;font-size:12.5px;cursor:pointer;transition:opacity .12s,border-color .12s,box-shadow .12s}
+.mnode:hover,.mnode:focus-visible{border-color:var(--ink)}
+.mapw.hov .mnode{opacity:.35}
+.mapw.hov .mnode.me{opacity:1;border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.mapw.hov .mnode.to{opacity:1;border-color:var(--kgB);box-shadow:0 0 0 2px var(--kgB)}
+.mapw.hov .mnode.from{opacity:1;border:1.5px dashed var(--sub)}
+.mapnote{font-size:13px;color:var(--sub);min-height:1.6em}
+.mapnote b{color:var(--ink)}
+.mkey{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--sub)}
+.mkey i{display:inline-block;width:12px;height:12px;border-radius:3px;border:2px solid;vertical-align:-2px;margin-right:5px}
+
+/* 조합 */
+.combo{display:flex;flex-direction:column;gap:10px;padding-top:18px;border-top:1.5px solid var(--line)}
+.combo:first-of-type{border-top:0;padding-top:0}
+.combo h3{font-size:17px}
+.cov td.ok{color:var(--midT);font-weight:600}
+.cov td.no{color:var(--postT);font-weight:600}
+.cov td.dot{text-align:center}
+
+@media (max-width:760px){
+  .side{align-items:flex-start}
+  .views{justify-content:flex-start}
+  .mapg{display:flex;flex-direction:column}
+  .mapg .mh:not(:first-child){display:none}
+  .mapg .mc[data-col]::before{content:attr(data-col);display:block;width:100%;font-size:11.5px;color:var(--faint)}
+  .mapg .mc.empty{display:none}
+}
+
+/* 실제 실행 출력 — 지어낸 예시와 구별한다. <div class="runk">실행 출력 · 환경</div><pre class="run">…</pre> */
+.runk{font-size:11.5px;font-weight:600;letter-spacing:.04em;color:var(--midT);display:flex;align-items:center;gap:6px;margin-bottom:-6px}
+.runk::before{content:"▶";font-size:9px}
+pre.run{border-left:3px solid var(--midB);background:var(--mid);color:var(--midT)}

@@ -25,6 +25,22 @@ window.PAGE = {
   ],
  },
  compareDefault: ["T2", "T3", "T5"],
+ map: {rows: "fail", cols: "stage", title: "막는 실패 × 개입 지점",
+  lede: "어느 실패를 경로의 어디에서 막는지. 한 칸이 비어 있으면 그 실패를 그 지점에서 막는 기법이 없다는 뜻이다."},
+ combos: [
+  {name: "A. Outbox 기본 조합", ids: ["T3", "T4", "T8", "T9"],
+   when: "서비스 둘(주문 → 재고)이 이벤트 하나로 이어지는 경우의 출발점.",
+   residual: "여러 서비스를 거치는 흐름의 중간 실패(결제는 됐는데 재고가 없음)는 되돌리지 못한다. 어딘가에서 생긴 불일치를 찾아 주는 장치도 없다.",
+   cost: "outbox · processed_message 테이블, 릴레이(Polling 또는 CDC), DLT 감시"},
+  {name: "B. Spring 표준 스택", ids: ["T5", "T8", "T9", "T10"],
+   when: "Spring Modulith 를 쓸 수 있고, outbox 와 릴레이를 직접 만들고 싶지 않은 경우.",
+   residual: "중간 단계 실패는 여전히 남는다. 대사 배치가 찾아 주지만 다음 실행까지 어긋난 채다.",
+   cost: "Spring Modulith 의존과 발행 기록 정리, 대사 규칙 작성"},
+  {name: "C. 여러 서비스 흐름까지", ids: ["T3", "T4", "T6", "T8", "T9", "T10"],
+   when: "주문 → 결제 → 재고처럼 단계가 여럿이고, 중간 실패를 업무 규칙으로 되돌려야 하는 경우.",
+   residual: "표의 실패는 모두 맡는 기법이 있다. 남는 것은 Saga 의 격리 부재(보상 전까지 중간 상태가 보인다)와 운영할 구성 요소의 수다.",
+   cost: "A 의 구성 + 오케스트레이터 · saga 상태 · 단계별 보상 규칙 + 대사 배치"},
+ ],
  exampleDataLabel: "예시 상태",
  diagramLegend: {llm: "서비스 로직", store: "추가 테이블 · 토픽", kg: "서비스 DB · 브로커", io: "입력 · 결과"},
  sourceColumns: ["종류"],
@@ -400,24 +416,38 @@ public void place(Order o) {
    {l: "입력", t: "메시지", m: "eventId=e-77\nOrderCreated(1001, A×2)", tag: "T4 가 두 번 보냄"},
    {l: "처리", t: "중복 키 검사", s: "INSERT processed_message (기본 키)"},
    {l: "기록 위치", t: "processed_message", s: "재고 DB 안", c: "idx"},
-   {l: "결과", t: "처리 · 건너뜀", m: "1회: 삽입 성공 → A 10→8\n2회: 키 충돌 → 건너뜀"},
+   {l: "결과", t: "처리 · 건너뜀 (실행 출력)", m: "recv e-77 → stock A 10→8\nrecv e-77 → skip (already processed)\nfinal stock A = 8"},
    {l: "반영 위치", t: "소비 쪽", s: "재고 변경과 같은 트랜잭션"}],
   ex: {data: `stock (재고 DB)        processed_message (재고 DB)
   A  10                  비어 있음`,
-   html: `<h4>① 코드</h4>
+   html: `<p class="src">이 기법의 예시는 실제로 돌린 결과다. Spring Boot 4.1.1 · spring-kafka 4.1.1 · Embedded Kafka 4.2.1(KRaft, JVM 안) · H2 2.4.240 · JDK 27, 테스트 두 개(@SpringBootTest + @EmbeddedKafka)에서 같은 e-77 을 두 번 보냈다.</p>
+<h4>① 리스너 — 실행한 코드 그대로</h4>
 <pre>@KafkaListener(topics = "order-events")
 @Transactional
-void on(OrderCreated e) {
-  if (!processed.insertIfAbsent(e.eventId())) return;   // 이미 처리한 메시지
-  stock.decrease("A", 2);
+public void on(String payload) {
+    OrderCreated e = json.readValue(payload, OrderCreated.class);
+    try {
+        jdbc.update("INSERT INTO processed_message (message_id) VALUES (?)", e.eventId());
+    } catch (DuplicateKeyException dup) {
+        System.out.println("recv " + e.eventId() + " → skip (already processed)");
+        return;
+    }
+    int before = stock.qty(e.product());
+    stock.decrease(e.product(), e.qty());
+    System.out.println("recv " + e.eventId() + " → stock " + e.product() + " "
+            + before + "→" + stock.qty(e.product()));
 }</pre>
-<h4>② 결과 비교 — e-77 이 두 번 도착</h4>
-<div class="tw"><table><tr><th></th><th>회차</th><th>processed_message</th><th>재고 A</th></tr>
-<tr><td>T8 없음</td><td>1</td><td>—</td><td>8</td></tr>
-<tr><td>T8 없음</td><td>2</td><td>—</td><td>6 — 중복 차감</td></tr>
-<tr><td>T8 있음</td><td>1</td><td>e-77 삽입</td><td>8</td></tr>
-<tr><td>T8 있음</td><td>2</td><td>e-77 이미 있음 → 건너뜀</td><td>8</td></tr></table></div>
-<h4>틀리기 쉬운 곳</h4><p>id 기록과 재고 변경이 다른 트랜잭션이면 둘 사이 장애에서 다시 어긋난다. id 는 생산자가 정한 고유 값(eventId)이어야 한다. Kafka 오프셋은 릴레이가 같은 이벤트를 다시 발행하면 새 레코드라 값이 바뀐다.</p>`},
+<p class="src">T8 없음 쪽은 같은 메서드에서 try/catch(처리 기록)만 뺀 것이다.</p>
+<h4>② 실행 출력 — e-77 이 두 번 도착</h4>
+<div class="runk">T8 없음 · 실행 출력</div>
+<pre class="run">recv e-77 → stock A 10→8
+recv e-77 → stock A 8→6
+final stock A = 6</pre>
+<div class="runk">T8 있음 · 실행 출력</div>
+<pre class="run">recv e-77 → stock A 10→8
+recv e-77 → skip (already processed)
+final stock A = 8</pre>
+<h4>틀리기 쉬운 곳</h4><p>id 기록과 재고 변경이 다른 트랜잭션이면 둘 사이 장애에서 다시 어긋난다. id 는 생산자가 정한 고유 값(eventId)이어야 한다. Kafka 오프셋은 릴레이가 같은 이벤트를 다시 발행하면 새 레코드라 값이 바뀐다. 이 실행은 H2 에서 했다. PostgreSQL 은 실패한 INSERT 뒤 트랜잭션 전체가 중단되므로, 키 충돌을 예외로 잡는 대신 <code>INSERT … ON CONFLICT DO NOTHING</code> 의 반영 행 수로 판단하는 편이 안전하다 ‡.</p>`},
   pc: {usePro: "릴레이 재발행 · 재시도 · 리밸런스로 같은 메시지가 와도 재고가 한 번만 준다",
    useCon: "처리 기록 테이블과 정리 주기가 필요하다. 생산자가 고유 eventId 를 넣어야 한다",
    skipPro: "테이블 · 검사가 없어 처리 경로가 짧다",

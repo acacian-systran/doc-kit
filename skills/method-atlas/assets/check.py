@@ -7,8 +7,8 @@ check.py — 빌드한 비교 페이지를 브라우저로 열어 데이터와 �
 검사 항목
   - 데이터: 기법마다 모든 축 값 · 단계별 입출력 · 예시 · 장단점 4칸 · 한계가 있나,
     축 값 번호가 옵션 범위 안인가, 관계 대상 · 근거 key · 구조도 간선의 노드가 있나
-  - 화면: 콘솔 오류, 기법마다 상세가 그려지나(구조도 SVG · 입출력 상자 · 예시 · 연관), 탭 다섯 개,
-    필터 칩을 누르면 개수가 줄거나 같은가
+  - 화면: 콘솔 오류, 기법마다 상세가 그려지나(구조도 SVG · 입출력 상자 · 예시 · 연관), 탭마다 내용,
+    흐름 지도에 모든 기법이 놓였나 · 강조가 도나, 조합 탭, 간략 상세, 필터 칩을 누르면 개수가 줄거나 같은가
   - 가로 스크롤 (데스크톱 1280px · 모바일 390px)
 --shot 을 주면 첫 기법의 상세(입출력 · 예시 펼침)를 데스크톱 · 모바일로 남긴다. 실패하면 exit 1.
 """
@@ -98,6 +98,29 @@ def main():
             page.click(f'.tab[data-tab="{tab}"]')
             if not page.evaluate("() => document.querySelector('#body').textContent.trim().length"):
                 fails.append(f"탭 {tab} 이 비었다")
+        # 흐름 지도 · 조합 · 간략 상세
+        if page.evaluate("() => !!PAGE.map"):
+            if page.evaluate("() => document.querySelector('#map').hidden"):
+                fails.append("map 이 있는데 흐름 지도가 숨겨져 있다")
+            placed = set(page.evaluate("() => [...document.querySelectorAll('#map .mnode')].map(n=>n.dataset.node)"))
+            miss = [i for i in ids if i not in placed]
+            if miss:
+                fails.append(f"흐름 지도에 없는 기법: {', '.join(miss)} (행 축 값이 모두 「없음」 이거나 축 key 오류)")
+            page.hover("#map .mnode")
+            if not page.evaluate("() => document.querySelector('#map').classList.contains('hov')"):
+                fails.append("흐름 지도 강조가 동작하지 않는다")
+        if page.evaluate("() => (PAGE.combos||[]).length"):
+            page.click('.tab[data-tab="combos"]')
+            if page.evaluate("() => document.querySelectorAll('#body .combo').length") != page.evaluate("() => PAGE.combos.length"):
+                fails.append("조합 탭의 묶음 수가 데이터와 다르다")
+            bad = page.evaluate("() => PAGE.combos.flatMap(c=>c.ids.filter(id=>!PAGE.methods.some(t=>t.id===id)))")
+            if bad:
+                fails.append(f"조합에 없는 기법 id: {bad}")
+        page.click('[data-view="compact"]')
+        page.click(f'.card[data-sel="{ids[0]}"] .t')
+        if not page.evaluate("() => !!document.querySelector('#spec-fold') && !!document.querySelector('#body svg.dg')"):
+            fails.append("간략 상세가 그려지지 않는다")
+        page.click('[data-view="compact"]')
         total = len(ids)
         page.click(".chip[data-ax]")
         n = int(page.text_content("#count"))
@@ -109,6 +132,9 @@ def main():
             page.click('.tab[data-tab="detail"]')
             page.click(f'.card[data-sel="{ids[0]}"] .t')
             page.evaluate("() => document.querySelectorAll('details.fold').forEach(d=>d.open=true)")
+            if a.shot and w == 1280 and page.evaluate("() => !document.querySelector('#map').hidden"):
+                pathlib.Path(a.shot).mkdir(parents=True, exist_ok=True)
+                page.locator("#map").screenshot(path=str(pathlib.Path(a.shot) / "map.png"))
             if overflow(page) > 1:
                 fails.append(f"{w}px 에서 가로 스크롤 {overflow(page)}px")
             if a.shot:

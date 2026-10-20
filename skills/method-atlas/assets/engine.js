@@ -12,6 +12,7 @@ const FIG_AXES = P.axes.structure, OPS_AXES = P.axes.ops || [];
 const ALL_AXES = [...FIG_AXES, ...OPS_AXES];
 ALL_AXES.forEach(a=>{ a.cls = a.cls || []; });
 const STAGE_AX = ALL_AXES.find(a=>a.key===L.stageAxis);
+const SRC_L = /^근거/.test(L.source) ? L.source : `근거 ${L.source}`;
 const T = P.methods;
 const BY = Object.fromEntries(T.map(t=>[t.id,t]));
 const SRC = P.sources || [];
@@ -46,7 +47,18 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const br = s => esc(s).replace(/\n/g,"<br>");
 const state = {exOpen:false, ioOpen:false, f:Object.fromEntries(ALL_AXES.map(a=>[a.key,new Set()])),
-  sel:T[0].id, cmp:new Set(P.compareDefault || T.slice(0,3).map(t=>t.id)), tab:"detail", q:""};
+  sel:T[0].id, cmp:new Set(P.compareDefault || T.slice(0,3).map(t=>t.id)), tab:"detail", q:"",
+  view:Object.assign({map:!!P.map, combos:!!(P.combos||[]).length, compact:false}, P.views||{})};
+/* 보기 설정은 보는 사람 브라우저에만 남는다 (없어도 기본값으로 그린다) */
+const VIEW_KEY = "method-atlas:view:" + P.title;
+try{ Object.assign(state.view, JSON.parse(localStorage.getItem(VIEW_KEY)||"{}")); }catch(_){}
+const saveView = () => { try{ localStorage.setItem(VIEW_KEY, JSON.stringify(state.view)); }catch(_){} };
+
+/* 한계 문장 끝의 「(→ T3 · T5)」 에서 그 한계를 맡는 기법을 뽑는다 */
+const HAND = Object.fromEntries(T.map(t=>{
+  const ids = [...(t.limit||"").matchAll(/→\s*([^)]*)\)/g)].flatMap(m=>m[1].match(/[A-Za-z]+\d+/g)||[]);
+  return [t.id, [...new Set(ids)].filter(id=>BY[id] && id!==t.id)];
+}));
 
 function match(t, skip){
   return ALL_AXES.every(a=>{
@@ -72,9 +84,50 @@ function renderHead(){
   $("#crit").hidden = !P.criterion;
   $("#total").textContent = T.length;
   $("#foot").innerHTML = P.footer || "";
+  renderViews();
+  renderTabs();
+}
+function renderViews(){
+  const V = [["map","흐름 지도",!!P.map],["combos","조합",!!(P.combos||[]).length],["compact","간략 상세",true]].filter(v=>v[2]);
+  $("#views").innerHTML = P.viewToggles===false ? "" : `<span class="vk">보기</span>` + V.map(([k,n])=>`<button type="button" class="vbtn" data-view="${k}" aria-pressed="${!!state.view[k]}">${n}</button>`).join("");
+}
+function renderTabs(){
+  if(state.tab==="combos" && !state.view.combos) state.tab = "detail";
   $("#tabs").innerHTML = [["detail",L.detail],["compare",L.compare,'<span class="n" id="cmpn"></span>'],["matrix",L.matrix],
+    ...(state.view.combos && (P.combos||[]).length?[["combos",L.combos||"조합"]]:[]),
     ...(SRC.length?[["sources",L.source]]:[]),...((P.glossary||[]).length?[["glossary",L.glossary]]:[])]
-    .map(([k,n,x])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${k==="detail"}">${esc(n)}${x||""}</button>`).join("");
+    .map(([k,n,x])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${k===state.tab}">${esc(n)}${x||""}</button>`).join("");
+  const n = $("#cmpn"); if(n) n.textContent = state.cmp.size || "";
+}
+
+/* ---------- 흐름 지도 — 행 축 × 열 축 격자에 기법을 놓는다 ---------- */
+function renderMap(){
+  const box = $("#map");
+  box.hidden = !(P.map && state.view.map);
+  if(box.hidden){ box.innerHTML = ""; return; }
+  const R = ALL_AXES.find(a=>a.key===P.map.rows), C = ALL_AXES.find(a=>a.key===P.map.cols);
+  const m = new Set(matched().map(t=>t.id));
+  const node = t => `<button type="button" class="mnode" data-sel="${t.id}" data-node="${t.id}"${m.has(t.id)?"":' style="opacity:.4"'}><span class="pill ${t.stage}">${t.id}</span>${esc(t.short)}</button>`;
+  const colCls = i => C.key===L.stageAxis && P.stages && P.stages[i] ? " "+P.stages[i].key : "";
+  const rows = R.opts.map((o,ri)=>{
+    if(!T.some(t=>(t.v[R.key]||[]).includes(ri))) return "";
+    return `<div class="mr">${esc(o)}</div>` + C.opts.map((co,ci)=>{
+      const ts = T.filter(t=>(t.v[R.key]||[]).includes(ri) && (t.v[C.key]||[]).includes(ci));
+      return `<div class="mc${ts.length?"":" empty"}" data-col="${esc(co)}">${ts.map(node).join("")}</div>`; }).join(""); }).join("");
+  box.innerHTML = `<div class="board-head"><h2>흐름 지도 <span class="hint">· ${esc(P.map.title || `${R.name} × ${C.name}`)}</span></h2></div>
+    ${P.map.lede?`<p class="hint">${P.map.lede}</p>`:""}
+    <div class="mapg" style="grid-template-columns:minmax(120px,170px) repeat(${C.opts.length},minmax(0,1fr))"><div class="mh">${esc(R.name)} ＼ ${esc(C.name)}</div>${C.opts.map((o,i)=>`<div class="mh${colCls(i)}">${esc(o)}</div>`).join("")}${rows}</div>
+    <div class="mkey"><span><i style="border-color:var(--ink)"></i>고른 ${esc(L.method)}</span><span><i style="border-color:var(--kgB)"></i>이 ${esc(L.method)}의 한계를 맡는 쪽</span><span><i style="border-color:var(--sub);border-style:dashed"></i>이 ${esc(L.method)}이 한계를 맡아 주는 쪽</span></div>
+    <p class="mapnote" id="mapnote">${esc(L.method)}에 마우스를 올리거나 포커스하면 한계 문장의 「→」 로 이어진 ${esc(L.method)}이 강조된다. 누르면 상세로 간다.</p>`;
+}
+function mapHover(id){
+  const box = $("#map"); if(box.hidden) return;
+  box.classList.toggle("hov", !!id);
+  box.querySelectorAll(".mnode").forEach(n=>{ const x=n.dataset.node;
+    n.classList.toggle("me", x===id); n.classList.toggle("to", !!id && HAND[id].includes(x)); n.classList.toggle("from", !!id && HAND[x].includes(id)); });
+  if(id){ const t = BY[id], to = HAND[id], from = T.filter(x=>HAND[x.id].includes(id)).map(x=>x.id);
+    $("#mapnote").innerHTML = `<b>${id}</b> 한계 — ${esc(t.limit)}${from.length?` <span class="dim">· ${from.join(" · ")} 의 한계를 맡는다</span>`:""}`;
+  }
 }
 
 /* ---------- filter board ---------- */
@@ -114,7 +167,7 @@ function flowHTML(t){
    노드: c · r = 격자 열 · 행, k = tech · llm · store · kg · io · other · build, n 이름, ty [유형], d 설명 줄,
    ref 다른 기법 id(누르면 이동), off 「사전 구축」 경계 안. 간선: f → t, n 단계 번호, both 양방향,
    off 사전 구축 간선, route above · below(루프) · vh. */
-function diagramHTML(t){
+function diagramHTML(t, compact){
   const D = t.diagram; if(!D) return "";
   const BW=140, BH=88, PW=180, RP=144, X0=16, Y0=40;
   const B = Object.fromEntries(D.nodes.map(n=>{ const x=X0+n.c*PW, y=Y0+n.r*RP; return [n.id,{...n,x,y,w:BW,h:BH,cx:x+BW/2,cy:y+BH/2}]; }));
@@ -174,7 +227,8 @@ function diagramHTML(t){
     `<span><span class="sw${k==="other"?" oth":""}"${sw[k]?` style="${sw[k]}"`:""}></span>${esc(DL[k])}</span>`).join("")}${off.length?`<span><span class="sw bndw"></span>${esc(L.boundary)}</span>`:""}</div>`;
   const steps = `<ol class="dsteps">${D.steps.map((s,i)=>`<li><span class="no">${i+1}</span><span>${esc(s)}</span></li>`).join("")}</ol>`;
   const offTxt = D.offNote ? `<p class="src"><b>${esc(L.boundary)}</b> — ${esc(D.offNote)}</p>` : D.offNone ? `<p class="src"><b>${esc(L.noBuild)}</b> — ${esc(D.offNone)}</p>` : "";
-  return `<div class="dgw">${svg}</div>${leg}${steps}${offTxt}`;
+  return compact ? `<div class="dgw">${svg}</div>${leg}<details class="fold" id="steps-fold"${state.stepsOpen?" open":""}><summary><h3>단계 설명 ${D.steps.length}개</h3></summary><div class="foldin">${steps}${offTxt}</div></details>`
+    : `<div class="dgw">${svg}</div>${leg}${steps}${offTxt}`;
 }
 
 /* ---------- 분류 · 운영 요건 표 — 축의 칩 + 그 축에 대한 이 기법의 설명(notes) ---------- */
@@ -199,8 +253,10 @@ function relAllHTML(t){
 }
 
 /* ---------- 상세 ---------- */
+const fold = (id, title, inner, open) => `<details class="sec fold" id="${id}"${open?" open":""}><summary><h3>${esc(title)}</h3></summary><div class="foldin">${inner}</div></details>`;
 function renderDetail(){
   const t = BY[state.sel];
+  const C = state.view.compact;
   const fits = match(t);
   const srcLinks = Object.entries(t.sources||{}).map(([k,v])=>SRC.some(s=>s.key===k)
     ? `<button type="button" class="plink" data-source="${esc(k)}">${esc(k)} ${v}</button>` : `${esc(k)} ${v}`).join(" · ");
@@ -209,11 +265,11 @@ function renderDetail(){
   <div class="dh">
     <div class="meta"><span class="pill ${t.stage}">${t.id}</span>${STAGE_AX?`<span>${esc(STAGE_AX.name)} ${esc(stageShort(t))}</span>`:""}${fits?"":`<span class="badge">현재 조건 미해당</span>`}</div>
     <h2>${esc(t.id)}. ${esc(t.name)}</h2>
-    <div class="meta">${srcLinks?`<span class="badge">근거 ${esc(L.source)} ${srcLinks}</span>`:""}${(t.badges||[]).map(([k,v])=>`<span class="badge">${esc(k)} <b>${esc(v)}</b></span>`).join("")}</div>
+    <div class="meta">${srcLinks?`<span class="badge">${esc(SRC_L)} ${srcLinks}</span>`:""}${(t.badges||[]).map(([k,v])=>`<span class="badge">${esc(k)} <b>${esc(v)}</b></span>`).join("")}</div>
     <p class="one">${esc(t.one)}</p>
-    ${t.def?`<div class="def"><span class="k">원문 정의</span><p>${t.def.html||esc(t.def.text)}</p>${t.def.formula?`<pre>${esc(t.def.formula)}</pre>`:""}<p class="src">${esc(t.def.src||"")}${t.def.link?` · <a href="${esc(t.def.link)}" target="_blank" rel="noopener">원본</a>`:""}</p></div>`:""}
+    ${t.def && !C?`<div class="def"><span class="k">원문 정의</span><p>${t.def.html||esc(t.def.text)}</p>${t.def.formula?`<pre>${esc(t.def.formula)}</pre>`:""}<p class="src">${esc(t.def.src||"")}${t.def.link?` · <a href="${esc(t.def.link)}" target="_blank" rel="noopener">원본</a>`:""}</p></div>`:""}
   </div>
-  ${t.diagram?`<div class="sec"><h3>작동 방식</h3>${diagramHTML(t)}</div>`:""}
+  ${t.diagram?`<div class="sec"><h3>작동 방식</h3>${diagramHTML(t, C)}</div>`:""}
   <details class="sec fold" id="io-fold"${state.ioOpen?" open":""}><summary><h3>단계별 입출력</h3></summary><div class="foldin">${flowHTML(t)}</div></details>
   <details class="sec fold" id="ex-fold"${state.exOpen?" open":""}><summary><h3>예시</h3></summary><div class="ex">${t.ex.data?`<div class="exk">${esc(P.exampleDataLabel||"예시 데이터")}</div><pre>${esc(t.ex.data)}</pre>`:""}${t.ex.html}</div></details>
   <div class="sec"><h3>장단점 · 한계</h3><div class="tw"><table class="pc"><tr><th></th><th>장점</th><th>단점</th></tr>
@@ -221,8 +277,9 @@ function renderDetail(){
     <tr><td>미사용</td><td>${esc(pc.skipPro)}</td><td>${esc(pc.skipCon)}</td></tr></table></div>
     <div class="note"><b>한계</b> — ${esc(t.limit)}</div>
     <p class="src">괄호 안에 근거를 명시하였다.</p></div>
-  <div class="sec"><h3>분류 · 운영 요건</h3>${specHTML(t)}</div>
-  <div class="sec"><h3>연관 ${esc(L.method)}</h3>${relAllHTML(t)}</div>`;
+  ${C ? fold("spec-fold","분류 · 운영 요건",specHTML(t),state.specOpen) : `<div class="sec"><h3>분류 · 운영 요건</h3>${specHTML(t)}</div>`}
+  ${C ? fold("rel-fold",`연관 ${L.method}`,relAllHTML(t),state.relOpen) : `<div class="sec"><h3>연관 ${esc(L.method)}</h3>${relAllHTML(t)}</div>`}
+  ${C && t.def ? fold("def-fold","원문 정의",`<div class="def"><p>${t.def.html||esc(t.def.text)}</p>${t.def.formula?`<pre>${esc(t.def.formula)}</pre>`:""}<p class="src">${esc(t.def.src||"")}${t.def.link?` · <a href="${esc(t.def.link)}" target="_blank" rel="noopener">원본</a>`:""}</p></div>`,state.defOpen) : ""}`;
 }
 
 /* ---------- 비교 — 고른 기법을 열로, 「같음」 이 없는 행이 차이 ---------- */
@@ -241,11 +298,28 @@ function renderCompare(){
   <div class="tw"><table><tr><th></th>${ts.map(t=>`<th><span class="pill">${t.id}</span> ${esc(t.short)}</th>`).join("")}</tr>
   ${row("요약", t=>esc(t.one), false)}
   ${FIG_AXES.map(ax).join("")}
-  ${SRC.length?row(`근거 ${L.source}`, t=>esc(srcTxt(t))):""}
+  ${SRC.length?row(SRC_L, t=>esc(srcTxt(t))):""}
   ${badgeKeys.map(k=>row(k, t=>esc(((t.badges||[]).find(b=>b[0]===k)||[,"—"])[1]))).join("")}
   ${noteKeys.map(a=>row(a.name, t=>esc((t.notes||{})[a.key]||"—"))).join("")}
   ${row("한계", t=>esc(t.limit), false)}
   </table></div>`;
+}
+
+/* ---------- 조합 — 함께 쓰는 묶음이 축의 어느 값을 막고 무엇이 남는가 ---------- */
+function renderCombos(){
+  const A = ALL_AXES.find(a=>a.key===(P.combosAxis || (P.map||{}).rows)) || FIG_AXES[0];
+  return `<p class="src">함께 쓰는 ${esc(L.method)} 묶음. 「${esc(A.name)}」 축의 값마다 묶음 안 누가 맡는지(●) 표시하고, 아무도 맡지 않은 값은 「남음」 이다.</p>` + P.combos.map(c=>{
+    const ts = c.ids.map(id=>BY[id]).filter(Boolean);
+    const rows = A.opts.map((o,i)=>{ if(A.cls[i]==="none") return "";
+      const hit = ts.map(t=>(t.v[A.key]||[]).includes(i));
+      const any = hit.some(Boolean);
+      return `<tr><th scope="row">${esc(o)}</th>${hit.map(h=>`<td class="dot">${h?"●":""}</td>`).join("")}<td class="${any?"ok":"no"}">${any?"막힘":"남음"}</td></tr>`; }).join("");
+    return `<section class="combo"><h3>${esc(c.name)}</h3>${c.when?`<p>${esc(c.when)}</p>`:""}
+      <div class="rel">${ts.map(t=>`<button type="button" class="relb" data-sel="${t.id}"><span class="pill ${t.stage}">${t.id}</span>${esc(t.short)}</button>`).join("")}</div>
+      <div class="tw"><table class="cov"><tr><th>${esc(A.name)}</th>${ts.map(t=>`<th>${t.id}</th>`).join("")}<th>결과</th></tr>${rows}</table></div>
+      ${c.residual?`<div class="note"><b>남는 위험</b> — ${esc(c.residual)}</div>`:""}
+      ${c.cost?`<p class="src"><b>드는 것</b> — ${esc(c.cost)}</p>`:""}</section>`;
+  }).join("");
 }
 
 /* ---------- 요약 행렬 ---------- */
@@ -253,7 +327,7 @@ function renderMatrix(){
   const m = new Set(matched().map(t=>t.id));
   const badgeKeys = [...new Set(T.flatMap(t=>(t.badges||[]).map(b=>b[0])))];
   return `<p class="src">${esc(L.method)}별 분류 값. 흐리게 표시된 행은 현재 조건 미해당이며, 행을 선택하면 상세로 이동한다.</p>
-  <div class="tw"><table class="mx"><tr><th>${esc(L.method)}</th>${FIG_AXES.map(a=>`<th>${esc(a.name)}</th>`).join("")}${badgeKeys.map(k=>`<th>${esc(k)}</th>`).join("")}${SRC.length?`<th>근거 ${esc(L.source)}</th>`:""}</tr>
+  <div class="tw"><table class="mx"><tr><th>${esc(L.method)}</th>${FIG_AXES.map(a=>`<th>${esc(a.name)}</th>`).join("")}${badgeKeys.map(k=>`<th>${esc(k)}</th>`).join("")}${SRC.length?`<th>${esc(SRC_L)}</th>`:""}</tr>
   ${T.map(t=>`<tr class="${m.has(t.id)?"":"off"}" data-sel="${t.id}"><td><span class="pill">${t.id}</span> ${esc(t.short)}</td>${FIG_AXES.map(a=>`<td><div class="mini">${litOnly(t,a)}</div></td>`).join("")}${badgeKeys.map(k=>`<td>${esc(((t.badges||[]).find(b=>b[0]===k)||[,"—"])[1])}</td>`).join("")}${SRC.length?`<td>${esc(srcTxt(t))}</td>`:""}</tr>`).join("")}
   </table></div>`;
 }
@@ -294,17 +368,19 @@ function renderGlossary(){
 
 function renderPane(){
   document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===state.tab));
-  const f = {detail:renderDetail, compare:renderCompare, matrix:renderMatrix, sources:renderSources, glossary:renderGlossary}[state.tab];
+  const f = {detail:renderDetail, compare:renderCompare, matrix:renderMatrix, combos:renderCombos, sources:renderSources, glossary:renderGlossary}[state.tab];
   $("#body").innerHTML = f();
   if(state.tab==="glossary"){ const i=$("#gq"); i.addEventListener("input",e=>{state.q=e.target.value; const pos=i.selectionStart; renderPane(); const n=$("#gq"); n.focus(); n.setSelectionRange(pos,pos);}); }
 }
-function renderAll(){ renderBoard(); renderList(); renderPane(); }
+function renderAll(){ renderBoard(); renderMap(); renderList(); renderPane(); }
 
 /* ---------- events ---------- */
 document.addEventListener("click", e=>{
   const chip = e.target.closest(".chip[data-ax]");
   if(chip){ const s=state.f[chip.dataset.ax], i=+chip.dataset.i; s.has(i)?s.delete(i):s.add(i); const m=matched(); if(m.length && !m.some(t=>t.id===state.sel)) state.sel=m[0].id; renderAll(); return; }
   if(e.target.closest(".cmp")) return;
+  const vb = e.target.closest("[data-view]");
+  if(vb){ const k=vb.dataset.view; state.view[k]=!state.view[k]; saveView(); renderViews(); renderTabs(); renderMap(); renderPane(); return; }
   const sb = e.target.closest("[data-source]");
   if(sb){ state.tab="sources"; renderPane(); document.getElementById("source-"+sb.dataset.source)?.scrollIntoView({behavior:"smooth",block:"start"}); return; }
   const tab = e.target.closest(".tab");
@@ -312,7 +388,10 @@ document.addEventListener("click", e=>{
   const sel = e.target.closest("[data-sel]");
   if(sel) select(sel.dataset.sel, true);
 });
-document.addEventListener("toggle", e=>{ if(e.target.id==="ex-fold") state.exOpen = e.target.open; if(e.target.id==="io-fold") state.ioOpen = e.target.open; }, true);
+const FOLDS = {"ex-fold":"exOpen","io-fold":"ioOpen","spec-fold":"specOpen","rel-fold":"relOpen","def-fold":"defOpen","steps-fold":"stepsOpen"};
+document.addEventListener("toggle", e=>{ const k = FOLDS[e.target.id]; if(k) state[k] = e.target.open; }, true);
+["mouseover","focusin"].forEach(ev=>document.addEventListener(ev, e=>{ const n=e.target.closest&&e.target.closest(".mnode"); if(n) mapHover(n.dataset.node); }));
+["mouseout","focusout"].forEach(ev=>document.addEventListener(ev, e=>{ const n=e.target.closest&&e.target.closest(".mnode"); if(n && !(e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest(".mnode"))) mapHover(null); }));
 document.addEventListener("change", e=>{
   const c = e.target.closest("[data-cmp]");
   if(c){ c.checked ? state.cmp.add(c.dataset.cmp) : state.cmp.delete(c.dataset.cmp); renderList(); if(state.tab==="compare") renderPane(); }

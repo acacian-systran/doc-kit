@@ -30,6 +30,14 @@ window.PAGE = {
   diagramLegend: {kg: "KG"},                  // 구조도 범례 이름 덮어쓰기 (tech llm store kg other io)
   sourceColumns: ["조회 방식", "에이전트", "주 개입 시점"],  // 근거 비교표 열 = sources[].meta 의 key
 
+  // 흐름 지도 (선택) — 필터 보드 위 격자. 행 축 × 열 축 칸에 기법을 놓고, 올리면 한계 「(→ Tn)」 으로 이어진 기법을 강조한다
+  map: {rows: "fail", cols: "stage", title: "막는 실패 × 개입 지점", lede: "한 줄 설명 (HTML)"},
+  // 조합 (선택) — 「조합」 탭. 축(combosAxis, 기본 map.rows) 값마다 묶음 안 누가 막는지 ● 와 막힘/남음을 자동 계산
+  combos: [{name: "A. Outbox 기본 조합", ids: ["T3", "T4", "T8", "T9"], when: "언제 쓰나", residual: "남는 위험", cost: "드는 것"}],
+  combosAxis: "fail",
+  // 보기 스위치 기본값. 보는 사람이 머리의 「보기」 단추로 바꾸며, 브라우저에만 저장된다. viewToggles: false 면 단추를 숨긴다
+  views: {map: true, combos: true, compact: false},
+
   methods: [{
     id: "T1", name: "Data-Aware Schema (VoID → ShEx)", short: "Data-Aware Schema",
     stage: "pre",                              // 색 슬롯 pre | mid | post
@@ -78,6 +86,17 @@ window.PAGE = {
   ],
   footer: "<div>근거 논문 — <a href=…>…</a></div><div>분류와 판정은 Claude 가 제안한 것이며 …</div>",
 };
+```
+
+## 실제 실행 출력
+
+예시를 실제로 돌렸으면 `ex.html` 안에서 지어낸 예시와 구별한다. 환경(버전)을 `p.src` 한 줄로 적고, 출력은 아래처럼 grep 한 줄 그대로 넣는다.
+줄이거나 고치지 않는다. 실행 프로젝트는 `papers/<key>/lab/` 에 두고 README 에 실행 명령 · 버전을 남긴다.
+
+```html
+<div class="runk">T8 있음 · 실행 출력</div>
+<pre class="run">recv e-77 → skip (already processed)
+final stock A = 8</pre>
 ```
 
 ## 구조도 좌표 요령
