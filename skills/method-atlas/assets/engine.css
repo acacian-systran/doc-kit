@@ -276,8 +276,9 @@ ol.dsteps .no{width:20px;height:20px;border-radius:50%;background:var(--ink);col
 
 /* 용어 tooltip — 본문에서 처음 나오는 용어에 <span class="tt" tabindex="0" data-tip="뜻">용어</span> */
 .tt{border-bottom:1px dotted var(--sub);cursor:help;position:relative}
-.tt::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:max-content;max-width:min(320px,80vw);white-space:normal;background:var(--ink);color:var(--onInk);font-size:12.5px;font-weight:400;line-height:1.5;padding:6px 10px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .12s}
-.tt:hover::after,.tt:focus-visible::after{opacity:1}
+.tt::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:max-content;max-width:min(360px,80vw);white-space:normal;text-align:left;background:var(--ink);color:var(--onInk);font-size:12.5px;font-weight:400;letter-spacing:0;line-height:1.5;padding:6px 10px;border-radius:8px;pointer-events:none;display:none}
+.tt:hover::after,.tt:focus-visible::after{display:block}
+.tt.r::after{left:auto;right:0}   /* 오른쪽 끝 가까이 있는 용어 */
 
 /* 보기 설정 스위치 */
 .side{display:flex;flex-direction:column;gap:10px;align-items:flex-end}
@@ -331,3 +332,25 @@ ol.dsteps .no{width:20px;height:20px;border-radius:50%;background:var(--ink);col
 .runk{font-size:11.5px;font-weight:600;letter-spacing:.04em;color:var(--midT);display:flex;align-items:center;gap:6px;margin-bottom:-6px}
 .runk::before{content:"▶";font-size:9px}
 pre.run{border-left:3px solid var(--midB);background:var(--mid);color:var(--midT)}
+
+
+/* 권장 출발점 — 페이지가 먼저 주는 답 */
+.answer{background:var(--surface);border:1.5px solid var(--ink);border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.answer .ak{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--sub)}
+.answer .at{font-size:17px;font-weight:600;line-height:1.5;max-width:80ch}
+.answer .ad{font-size:14px;color:var(--sub);max-width:80ch}
+.answer .rel{align-items:center}
+.answer .go{border:0;background:none;padding:0;font:inherit;font-size:13px;color:var(--sub);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+
+/* 접는 필터 보드 */
+.boardt{border:0;background:none;padding:0;font:inherit;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.boardt::before{content:"";width:0;height:0;border-left:6px solid currentColor;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent;transition:transform .15s}
+.boardt[aria-expanded="true"]::before{transform:rotate(90deg)}
+.board.closed{padding-block:12px}
+.board.closed #groups,.board.closed #crit,.board.closed #reset{display:none}
+
+/* 흐름 지도 칸은 이름만 — 열이 이미 개입 시점을 말한다 */
+.mapw.lean .mnode{padding:2px 9px;font-size:12.5px}
+.mapw.lean .mnode .pill{display:none}
+.mapw.lean .mapg>div{padding:6px 8px}
+.mapw.lean .mapg .mc{gap:5px}

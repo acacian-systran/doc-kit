@@ -48,9 +48,9 @@ const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const br = s => esc(s).replace(/\n/g,"<br>");
 const state = {exOpen:false, ioOpen:false, f:Object.fromEntries(ALL_AXES.map(a=>[a.key,new Set()])),
   sel:T[0].id, cmp:new Set(P.compareDefault || T.slice(0,3).map(t=>t.id)), tab:"detail", q:"",
-  view:Object.assign({map:!!P.map, combos:!!(P.combos||[]).length, compact:false}, P.views||{})};
+  view:Object.assign({map:!!P.map, combos:!!(P.combos||[]).length, compact:true, filters:false}, P.views||{})};
 /* 보기 설정은 보는 사람 브라우저에만 남는다 (없어도 기본값으로 그린다) */
-const VIEW_KEY = "method-atlas:view:" + P.title;
+const VIEW_KEY = "method-atlas:view2:" + P.title;
 try{ Object.assign(state.view, JSON.parse(localStorage.getItem(VIEW_KEY)||"{}")); }catch(_){}
 const saveView = () => { try{ localStorage.setItem(VIEW_KEY, JSON.stringify(state.view)); }catch(_){} };
 
@@ -82,18 +82,29 @@ function renderHead(){
   $("#legend").innerHTML = (P.legend||[]).map(x=>`<span><span class="sw" style="background:var(--${x.cls});border-color:var(--${x.cls}B)"></span>${esc(x.label)}</span>`).join("");
   $("#crit").innerHTML = P.criterion || "";
   $("#crit").hidden = !P.criterion;
+  renderAnswer();
   $("#total").textContent = T.length;
   $("#foot").innerHTML = P.footer || "";
   renderViews();
   renderTabs();
 }
+/* 권장 출발점 — 「그래서 무엇부터」 에 대한 이 페이지의 답. 기법 칩과 조합 탭으로 잇는다 */
+function renderAnswer(){
+  const A = P.answer, box = $("#answer");
+  box.hidden = !A; if(!A) return;
+  const ids = (A.ids||[]).filter(id=>BY[id]);
+  box.innerHTML = `<div class="ak">${esc(A.label||"권장 출발점")}</div><p class="at">${A.html||esc(A.text)}</p>${A.note?`<p class="ad">${A.note}</p>`:""}
+    <div class="rel">${ids.map(id=>`<button type="button" class="relb" data-sel="${id}"><span class="pill ${BY[id].stage}">${id}</span>${esc(BY[id].short)}</button>`).join("")}
+    ${(P.combos||[]).length?`<button type="button" class="go" data-go="combos">조합별로 남는 위험 보기 →</button>`:""}</div>`;
+}
+const plain = h => { const d=document.createElement("div"); d.innerHTML=h||""; return d.textContent; };
 function renderViews(){
   const V = [["map","흐름 지도",!!P.map],["combos","조합",!!(P.combos||[]).length],["compact","간략 상세",true]].filter(v=>v[2]);
   $("#views").innerHTML = P.viewToggles===false ? "" : `<span class="vk">보기</span>` + V.map(([k,n])=>`<button type="button" class="vbtn" data-view="${k}" aria-pressed="${!!state.view[k]}">${n}</button>`).join("");
 }
 function renderTabs(){
   if(state.tab==="combos" && !state.view.combos) state.tab = "detail";
-  $("#tabs").innerHTML = [["detail",L.detail],["compare",L.compare,'<span class="n" id="cmpn"></span>'],["matrix",L.matrix],
+  $("#tabs").innerHTML = [["detail",L.detail],["compare",L.compare,'<span class="n" id="cmpn"></span>'],...(P.map && P.matrix!==true?[]:[["matrix",L.matrix]]),
     ...(state.view.combos && (P.combos||[]).length?[["combos",L.combos||"조합"]]:[]),
     ...(SRC.length?[["sources",L.source]]:[]),...((P.glossary||[]).length?[["glossary",L.glossary]]:[])]
     .map(([k,n,x])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${k===state.tab}">${esc(n)}${x||""}</button>`).join("");
@@ -104,21 +115,23 @@ function renderTabs(){
 function renderMap(){
   const box = $("#map");
   box.hidden = !(P.map && state.view.map);
+  box.classList.toggle("lean", P.map && P.map.lean!==false);
   if(box.hidden){ box.innerHTML = ""; return; }
   const R = ALL_AXES.find(a=>a.key===P.map.rows), C = ALL_AXES.find(a=>a.key===P.map.cols);
   const m = new Set(matched().map(t=>t.id));
-  const node = t => `<button type="button" class="mnode" data-sel="${t.id}" data-node="${t.id}"${m.has(t.id)?"":' style="opacity:.4"'}><span class="pill ${t.stage}">${t.id}</span>${esc(t.short)}</button>`;
+  const node = t => `<button type="button" class="mnode" data-sel="${t.id}" data-node="${t.id}" title="${t.id} · ${esc(t.one)}"${m.has(t.id)?"":' style="opacity:.4"'}><span class="pill ${t.stage}">${t.id}</span>${esc(t.short)}</button>`;
   const colCls = i => C.key===L.stageAxis && P.stages && P.stages[i] ? " "+P.stages[i].key : "";
   const rows = R.opts.map((o,ri)=>{
     if(!T.some(t=>(t.v[R.key]||[]).includes(ri))) return "";
     return `<div class="mr">${esc(o)}</div>` + C.opts.map((co,ci)=>{
       const ts = T.filter(t=>(t.v[R.key]||[]).includes(ri) && (t.v[C.key]||[]).includes(ci));
       return `<div class="mc${ts.length?"":" empty"}" data-col="${esc(co)}">${ts.map(node).join("")}</div>`; }).join(""); }).join("");
-  box.innerHTML = `<div class="board-head"><h2>흐름 지도 <span class="hint">· ${esc(P.map.title || `${R.name} × ${C.name}`)}</span></h2></div>
+  const crit = P.criterion && C.key===L.stageAxis ? ` <span class="tt r" tabindex="0" data-tip="${esc(plain(P.criterion))}">${esc(C.name)} 기준</span>` : "";
+  box.innerHTML = `<div class="board-head"><h2>흐름 지도 <span class="hint">· ${esc(P.map.title || `${R.name} × ${C.name}`)}</span></h2><span class="hint">${crit}</span></div>
     ${P.map.lede?`<p class="hint">${P.map.lede}</p>`:""}
     <div class="mapg" style="grid-template-columns:minmax(120px,170px) repeat(${C.opts.length},minmax(0,1fr))"><div class="mh">${esc(R.name)} ＼ ${esc(C.name)}</div>${C.opts.map((o,i)=>`<div class="mh${colCls(i)}">${esc(o)}</div>`).join("")}${rows}</div>
     <div class="mkey"><span><i style="border-color:var(--ink)"></i>고른 ${esc(L.method)}</span><span><i style="border-color:var(--kgB)"></i>이 ${esc(L.method)}의 한계를 맡는 쪽</span><span><i style="border-color:var(--sub);border-style:dashed"></i>이 ${esc(L.method)}이 한계를 맡아 주는 쪽</span></div>
-    <p class="mapnote" id="mapnote">${esc(L.method)}에 마우스를 올리거나 포커스하면 한계 문장의 「→」 로 이어진 ${esc(L.method)}이 강조된다. 누르면 상세로 간다.</p>`;
+    <p class="mapnote" id="mapnote">${esc(L.method)}을 누르면 아래에 상세가 열린다. 올리면 그 한계를 맡는 ${esc(L.method)}이 강조된다.</p>`;
 }
 function mapHover(id){
   const box = $("#map"); if(box.hidden) return;
@@ -138,6 +151,9 @@ function renderBoard(){
       const on = state.f[a.key].has(i);
       return `<button type="button" class="chip${a.cls[i]?" c-"+a.cls[i]:""}${!n&&!on?" zero":""}" aria-pressed="${on}" data-ax="${a.key}" data-i="${i}">${esc(o)}<span class="n">${n}</span></button>`;
     }).join("")}</div></div>`).join("")}</div>` : "";
+  const open = state.view.filters || ALL_AXES.some(a=>state.f[a.key].size);
+  document.querySelector(".board").classList.toggle("closed", !open);
+  $("#boardt").setAttribute("aria-expanded", open);
   $("#groups").innerHTML = g(P.axes.structureTitle||"구조 분류", FIG_AXES) + g(P.axes.opsTitle||"운영 요건", OPS_AXES);
   $("#count").textContent = matched().length;
   const act = ALL_AXES.flatMap(a=>[...state.f[a.key]].map(i=>a.opts[i]));
@@ -379,6 +395,11 @@ document.addEventListener("click", e=>{
   const chip = e.target.closest(".chip[data-ax]");
   if(chip){ const s=state.f[chip.dataset.ax], i=+chip.dataset.i; s.has(i)?s.delete(i):s.add(i); const m=matched(); if(m.length && !m.some(t=>t.id===state.sel)) state.sel=m[0].id; renderAll(); return; }
   if(e.target.closest(".cmp")) return;
+  if(e.target.closest("#boardt")){ state.view.filters = !$(".board").classList.contains("closed") ? false : true;
+    if(!state.view.filters) ALL_AXES.forEach(a=>state.f[a.key].clear());
+    saveView(); renderAll(); return; }
+  const go = e.target.closest(".go[data-go]");
+  if(go){ state.tab = go.dataset.go; renderPane(); document.querySelector(".pane").scrollIntoView({behavior:"smooth",block:"start"}); return; }
   const vb = e.target.closest("[data-view]");
   if(vb){ const k=vb.dataset.view; state.view[k]=!state.view[k]; saveView(); renderViews(); renderTabs(); renderMap(); renderPane(); return; }
   const sb = e.target.closest("[data-source]");

@@ -24,11 +24,13 @@ __CSS__
     </div>
   </header>
 
+  <section class="answer" id="answer" aria-label="권장 출발점" hidden></section>
+
   <section class="mapw" id="map" aria-label="흐름 지도" hidden></section>
 
   <section class="board" aria-label="조건 필터">
     <div class="board-head">
-      <h2>필터 조건 <span class="hint">· 해당 <span class="count" id="count"></span> / <span id="total"></span></span></h2>
+      <h2><button type="button" class="boardt" id="boardt" aria-expanded="true">조건으로 찾기</button> <span class="hint">· 해당 <span class="count" id="count"></span> / <span id="total"></span> · <span class="tt" tabindex="0" data-tip="같은 축 안에서는 OR, 축 사이에서는 AND 로 적용한다">규칙</span></span></h2>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <span class="hint" id="active"></span>
         <button class="reset" id="reset" type="button">조건 초기화</button>

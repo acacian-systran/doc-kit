@@ -116,12 +116,22 @@ def main():
             bad = page.evaluate("() => PAGE.combos.flatMap(c=>c.ids.filter(id=>!PAGE.methods.some(t=>t.id===id)))")
             if bad:
                 fails.append(f"조합에 없는 기법 id: {bad}")
-        page.click('[data-view="compact"]')
+        compact_on = page.get_attribute('[data-view="compact"]', "aria-pressed") == "true"
+        if not compact_on:
+            page.click('[data-view="compact"]')
         page.click(f'.card[data-sel="{ids[0]}"] .t')
         if not page.evaluate("() => !!document.querySelector('#spec-fold') && !!document.querySelector('#body svg.dg')"):
             fails.append("간략 상세가 그려지지 않는다")
         page.click('[data-view="compact"]')
+        if page.evaluate("() => !!document.querySelector('#spec-fold')"):
+            fails.append("간략 상세를 꺼도 접힌 채다")
+        if compact_on:
+            page.click('[data-view="compact"]')
+        if page.evaluate("() => PAGE.answer ? document.querySelector('#answer').hidden : false"):
+            fails.append("answer 가 있는데 권장 출발점이 숨겨져 있다")
         total = len(ids)
+        if page.evaluate("() => document.querySelector('.board').classList.contains('closed')"):
+            page.click("#boardt")
         page.click(".chip[data-ax]")
         n = int(page.text_content("#count"))
         if n > total:
