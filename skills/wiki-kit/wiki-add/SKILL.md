@@ -65,8 +65,8 @@ description: Add one node to a project wiki set up with wiki-kit — a term the 
    - `auto` → 이번에 만든 · 고친 파일만 경로로 하나씩 `git add <경로>`(`git add -A` · `-u` · `.` · `git commit -a` 금지). 커밋 직전에 `git diff --cached --name-only`가 이번 작업 목록과 정확히 같은지 확인하고, 다른 파일이 staged면 커밋하지 않고 알린다. 메시지는 `<commit_prefix><종류> 노드 <제목> — <한 구절>`.
    - `ask` → 커밋할 파일 목록을 보여 주고 묻는다.
    - `never` → 하지 않음.
-   push는 하지 않는다.
-   - 0단계 이후 이번 작업 파일이 다른 커밋에 이미 들어갔으면(`git log -3 --stat`) 다시 커밋하지 않고 그 커밋을 알린다.
+
+   0단계 이후 이번 작업 파일이 다른 커밋에 이미 들어갔으면(`git log -3 --stat`) 다시 커밋하지 않고 그 커밋을 알린다. push는 하지 않는다.
 5. 실패하면 고치고 다시. 고칠 수 없으면 무엇이 실패했는지 그대로 보고.
 
 ## 7. 보고

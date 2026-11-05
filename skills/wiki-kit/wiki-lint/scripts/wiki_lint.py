@@ -16,12 +16,18 @@ import argparse
 import re
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 from urllib.parse import unquote
 
 DEFAULTS = {"index": "index.md", "log": "log.md", "node_types": "개념, 결정, 결과, 헷갈린-점", "ignore": ""}
 LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 CODE = re.compile(r"```.*?```|`[^`\n]*`", re.S)
+
+
+def key(p: Path) -> str:
+    """Resolved path in NFC, so macOS NFD file names match NFC links and git output."""
+    return unicodedata.normalize("NFC", str(p.resolve()))
 
 
 def frontmatter(text: str) -> dict[str, str] | None:
@@ -58,7 +64,7 @@ def links(path: Path) -> list[tuple[int, str]]:
     return out
 
 
-def git_changed(root: Path) -> set[Path]:
+def git_changed(root: Path) -> set[str]:
     try:
         top = Path(subprocess.check_output(["git", "rev-parse", "--show-toplevel"], cwd=root, text=True).strip())
         out = subprocess.check_output(["git", "status", "--porcelain", "-z", "--untracked-files=all", "--", "."],
@@ -68,7 +74,7 @@ def git_changed(root: Path) -> set[Path]:
     files = set()
     for entry in out.split("\0"):
         if len(entry) > 3:
-            files.add((top / entry[3:]).resolve())
+            files.add(key(top / entry[3:]))
     return files
 
 
@@ -96,7 +102,7 @@ def main() -> int:
     nodes = sorted(p for t in types if (root / t).is_dir() for p in (root / t).rglob("*.md") if not ignored(p))
     pages = sorted(p for p in root.rglob("*.md") if not ignored(p) and ".obsidian" not in p.parts)
     changed = git_changed(root) if args.changed else set()
-    check = {p for p in nodes if p.resolve() in changed} if args.changed else set(nodes)
+    check = {p for p in nodes if key(p) in changed} if args.changed else set(nodes)
 
     problems: list[tuple[str, str, str]] = []
 
@@ -106,17 +112,17 @@ def main() -> int:
     def rel(p: Path) -> str:
         return str(p.relative_to(root))
 
-    inbound: dict[Path, set[Path]] = {p.resolve(): set() for p in nodes}
+    inbound: dict[str, set[str]] = {key(p): set() for p in nodes}
     for page in pages:
         for n, target in links(page):
             dest = (page.parent / target).resolve()
-            if dest in inbound and dest != page.resolve():
-                inbound[dest].add(page.resolve())
+            if key(dest) in inbound and key(dest) != key(page):
+                inbound[key(dest)].add(key(page))
             if (page in check or page in (index, log) or not args.changed) and target and not dest.exists():
                 add("ERROR", "broken-link", f"{rel(page)}:{n}", target)
 
     for p in sorted(check):
-        r = p.resolve()
+        r = key(p)
         fm = frontmatter(p.read_text(encoding="utf-8"))
         folder = p.relative_to(root).parts[0]
         if fm is None:
@@ -126,12 +132,12 @@ def main() -> int:
                 add("ERROR", "type-mismatch", rel(p), f"type '{fm.get('type', '')}' ≠ 폴더 '{folder}'")
             if not fm.get("aliases"):
                 add("WARN", "no-aliases", rel(p), "")
-        if index.exists() and index.resolve() not in inbound[r]:
+        if index.exists() and key(index) not in inbound[r]:
             add("ERROR", "not-in-index", rel(p), f"{cfg['index']}에 링크 없음")
-        if not (inbound[r] - {index.resolve(), log.resolve()}):
+        if not (inbound[r] - {key(index), key(log)}):
             add("WARN", "orphan", rel(p), "index 말고 링크하는 노드 없음")
 
-    if args.changed and check and log.resolve() not in changed:
+    if args.changed and check and key(log) not in changed:
         add("WARN", "log-missing", cfg["log"], f"노드 {len(check)}개가 바뀌었는데 log 변경 없음")
 
     for level, code, msg in sorted(problems, key=lambda x: (x[0] != "ERROR", x[1], x[2])):
