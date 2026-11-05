@@ -15,6 +15,7 @@ skills/
   reading-vocab/                # 단독
   book-reader/                  # 단독
   w2ho/                         # 단독
+  tool-study-deck/              # 단독
   method-atlas/                 # 단독
   korean-report-style/          # 단독
   wiki-kit/                     # 번들 — wiki-init · wiki-add · wiki-ask · wiki-lint
@@ -34,6 +35,7 @@ skills/
 | `reading-vocab`       | 논문 · 책(장별 Markdown) 단어 카드 — 원문 속 뜻 하나만 담은 Quizlet · Anki 덱(cards) · 어휘 수준 테스트(level) · 학습 결과로 아는 단어 줄이기(result) | 단독 |
 | `book-reader`         | 장별 Markdown 책(O'Reilly 클리핑 등) → 원문 그대로의 정적 웹 리더 · 한영 병기판 · 드래그 단어 저장, 저장 단어는 `reading-vocab` 덱으로 넘김. 책마다 다른 것은 `book.json` 하나 | 단독 |
 | `w2ho`                | 논리적 말하기·글쓰기 — Why → What → How → Opinion 구조로 면접 답변·보고·발표·문서를 짜고(write) · 진단해 고치고(review) · 한 문제씩 연습(drill), 청중에 따라 How 깊이 조절 | 단독 |
+| `tool-study-deck`     | 도구 학습 덱 — 근거 표(sources) · 격리 환경에서 예시 장면을 실제로 돌려 기록(lab) · 15장 뼈대(storyboard) · 도형 중심 Slides 아티팩트와 읽는 대본(deck). 화면의 결과는 모두 실행 출력 | 단독 |
 | `method-atlas`        | 기법 비교 지도 — 문제 하나와 그 해결 기법들을 공통 예시 질문 · 같은 분류 축으로 비교하는 인터랙티브 페이지. 기법마다 구조도 · 단계별 입출력 · 쓸 때/안 쓸 때 예시 · 장단점과 한계 · 관계(선행·보완·대체·충돌·자원 공유), 필터 · 비교 · 요약 행렬 · 근거 · 용어집 탭. 데이터 파일 하나만 쓰고 엔진은 공용 | 단독 |
 | `korean-report-style` | 파일로 남기거나 보내는 한국어 문서의 문장 규약 — ASD-STE100에서 가져온 문장 원칙 · 편집 시 뜻 보존 · 상태와 위험의 정직한 서술 · 외부 공유 점검 · AI 문투 검출 | 단독 |
 | `wiki-init`           | 프로젝트 위키 설정 — 질문 몇 개로 `wiki.config.md`와 빈 index · log를 만듦. 기존 위키는 지금 규칙을 읽어 설정만 씀 | wiki-kit |
