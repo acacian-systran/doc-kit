@@ -18,7 +18,7 @@ skills/
   tool-study-deck/              # 단독
   method-atlas/                 # 단독
   korean-report-style/          # 단독
-  wiki-kit/                     # 번들 — wiki-init · wiki-add · wiki-ask · wiki-lint
+  wiki-kit/                     # 번들 — wiki-init · wiki-add · wiki-ask · wiki-lint · wiki-from-paper
 ```
 
 디렉터리가 한 단계 더 들어가 있으면 **번들**이다. 그 안의 스킬들은 서로를 전제하므로
@@ -41,11 +41,13 @@ skills/
 | `wiki-init`           | 프로젝트 위키 설정 — 질문 몇 개로 `wiki.config.md`와 빈 index · log를 만듦. 기존 위키는 지금 규칙을 읽어 설정만 씀 | wiki-kit |
 | `wiki-add`            | 위키 노드 하나 더하기 — 모르는 용어 · 헷갈린 질문 · 결정 · 결과를 근거에서 찾아 공용 형식으로 쓰고 index · 첫 등장 · log 연결, 검사 · 커밋 | wiki-kit |
 | `wiki-ask`            | 위키에 묻기(읽기 전용) — 위키와 근거에서만 답하고 노드 링크를 붙임, 없으면 `wiki-add` 제안 | wiki-kit |
+| `wiki-from-paper`     | 논문 한 편 → 위키 — 쪽 앵커 텍스트 · 노드 plan(사용자 승인) · workflow로 노드 쓰기 ∥ → 독립 검증 → 그림(svg · mermaid · none, 실행마다 고름) → 연결. 인용마다 쪽 대조 검사 | wiki-kit |
 | `wiki-lint`           | 위키 점검(읽기 전용) — 깨진 링크 · index 누락 · 고아 · type 불일치 · log 누락(스크립트) + 노드 숫자와 근거 대조 | wiki-kit |
 
 `paper-tutor` · `paper-lab` · `reading-vocab` · `paper-explainer` · `book-reader` 는 산출물 루트를 공유한다 — 논문(책) 하나가
 `papers/<citekey>/` 이고 그 아래 `study/`(읽기) · `lab/`(구현) · `vocab/`(단어 카드) · `site/`(해설 사이트) · `reader/`(웹 리더)로 갈린다.
 `book-reader` 의 Words 서랍이 내보낸 `<key>-picked-*.csv` 는 `reading-vocab` 의 `picked` 모드가 받는다.
+`wiki-from-paper` 는 논문 위키를 `papers/<citekey>/wiki/` 에 두고 `study/paper.txt` 를 근거로 쓴다(paper-tutor 필요).
 `wiki-kit` 은 프로젝트마다 다른 것을 위키 루트의 `wiki.config.md` 하나에 두고 스킬은 복사하지 않는다(`book-reader` 의 `book.json` 과 같은 방식).
 `book-reader` 는 Node 의존성이 있어 처음 한 번 `npm ci --prefix skills/book-reader/assets` 가 필요하다.
 `reading-vocab` · `paper-explainer` 는 `paper-tutor` 의 `pdftext.py` 를 함께 쓰므로 두 스킬을 같이 설치한다.
