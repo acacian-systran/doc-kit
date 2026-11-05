@@ -17,10 +17,11 @@ skills/
   w2ho/                         # 단독
   method-atlas/                 # 단독
   korean-report-style/          # 단독
+  wiki-kit/                     # 번들 — wiki-init · wiki-add · wiki-ask · wiki-lint
 ```
 
 디렉터리가 한 단계 더 들어가 있으면 **번들**이다. 그 안의 스킬들은 서로를 전제하므로
-같이 설치한다. 번들 디렉터리의 README에 역할 분담이 적혀 있다. 지금은 번들이 없다.
+같이 설치한다. 번들 디렉터리의 README에 역할 분담이 적혀 있다.
 
 | 스킬 | 역할 | 묶음 |
 |------|------|------|
@@ -35,10 +36,15 @@ skills/
 | `w2ho`                | 논리적 말하기·글쓰기 — Why → What → How → Opinion 구조로 면접 답변·보고·발표·문서를 짜고(write) · 진단해 고치고(review) · 한 문제씩 연습(drill), 청중에 따라 How 깊이 조절 | 단독 |
 | `method-atlas`        | 기법 비교 지도 — 문제 하나와 그 해결 기법들을 공통 예시 질문 · 같은 분류 축으로 비교하는 인터랙티브 페이지. 기법마다 구조도 · 단계별 입출력 · 쓸 때/안 쓸 때 예시 · 장단점과 한계 · 관계(선행·보완·대체·충돌·자원 공유), 필터 · 비교 · 요약 행렬 · 근거 · 용어집 탭. 데이터 파일 하나만 쓰고 엔진은 공용 | 단독 |
 | `korean-report-style` | 파일로 남기거나 보내는 한국어 문서의 문장 규약 — ASD-STE100에서 가져온 문장 원칙 · 편집 시 뜻 보존 · 상태와 위험의 정직한 서술 · 외부 공유 점검 · AI 문투 검출 | 단독 |
+| `wiki-init`           | 프로젝트 위키 설정 — 질문 몇 개로 `wiki.config.md`와 빈 index · log를 만듦. 기존 위키는 지금 규칙을 읽어 설정만 씀 | wiki-kit |
+| `wiki-add`            | 위키 노드 하나 더하기 — 모르는 용어 · 헷갈린 질문 · 결정 · 결과를 근거에서 찾아 공용 형식으로 쓰고 index · 첫 등장 · log 연결, 검사 · 커밋 | wiki-kit |
+| `wiki-ask`            | 위키에 묻기(읽기 전용) — 위키와 근거에서만 답하고 노드 링크를 붙임, 없으면 `wiki-add` 제안 | wiki-kit |
+| `wiki-lint`           | 위키 점검(읽기 전용) — 깨진 링크 · index 누락 · 고아 · type 불일치 · log 누락(스크립트) + 노드 숫자와 근거 대조 | wiki-kit |
 
 `paper-tutor` · `paper-lab` · `reading-vocab` · `paper-explainer` · `book-reader` 는 산출물 루트를 공유한다 — 논문(책) 하나가
 `papers/<citekey>/` 이고 그 아래 `study/`(읽기) · `lab/`(구현) · `vocab/`(단어 카드) · `site/`(해설 사이트) · `reader/`(웹 리더)로 갈린다.
 `book-reader` 의 Words 서랍이 내보낸 `<key>-picked-*.csv` 는 `reading-vocab` 의 `picked` 모드가 받는다.
+`wiki-kit` 은 프로젝트마다 다른 것을 위키 루트의 `wiki.config.md` 하나에 두고 스킬은 복사하지 않는다(`book-reader` 의 `book.json` 과 같은 방식).
 `book-reader` 는 Node 의존성이 있어 처음 한 번 `npm ci --prefix skills/book-reader/assets` 가 필요하다.
 `reading-vocab` · `paper-explainer` 는 `paper-tutor` 의 `pdftext.py` 를 함께 쓰므로 두 스킬을 같이 설치한다.
 
