@@ -1,3 +1,6 @@
 .DS_Store
 __pycache__/
 node_modules/
+
+# 스킬 산출물 작업 폴더 — 원문 PDF·책 본문·빌드 캐시가 들어 있어 공개 저장소에 올리지 않는다
+papers/
