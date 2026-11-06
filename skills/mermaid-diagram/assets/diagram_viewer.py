@@ -49,9 +49,11 @@ def read_diagram(mmd, vocab, palette_boxes):
     title = title_m.group(1).strip() if title_m else mmd.stem
     q = re.search(r"%%\s*답하는 질문:\s*(.+)$", text, re.M)
     d = {"stem": mmd.stem, "file": mmd.name, "title": title, "question": q.group(1).strip() if q else "",
-         "nodes": {}, "rows": {}, "unused": [], "flow": False}
+         "nodes": {}, "rows": {}, "unused": [], "flow": False, "io": []}
     try:
-        _, _, nodes, _, _ = lp.parse_mmd(mmd)
+        _, _, nodes, edges, _ = lp.parse_mmd(mmd)
+        # 입출력 라벨: 마름모에서 나가지 않는 선의 라벨 (마름모에서 나가면 갈래 라벨)
+        d["io"] = [e[4] for e in edges if e[3] and nodes.get(e[0], {}).get("shape") != "diam"]
         ex, _, _, _ = lp.build_example(mmd, vocab, None, palette_boxes)
         d["rows"], d["unused"], d["flow"] = ex["rows"], ex["unused"], True
         cls_of = {c["cls"]: c for c in vocab["classes"]}
@@ -162,7 +164,8 @@ def main():
     reg, reg_problems = el.parse_registry(a.dir / "_elements.md")
     elements = {}
     for eid, e in reg.items():
-        uses = [d["key"] for d in diagrams if eid in d["nodes"]]
+        # [그림 key, 그 그림의 노드 id]. <id>_prev(앞 차례 상태)도 같은 요소다
+        uses = [[d["key"], n] for d in diagrams for n in (eid, eid + "_prev") if n in d["nodes"]]
         elements[eid] = {**e, "uses": uses}
     lint_msgs = []
     if reg:

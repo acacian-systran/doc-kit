@@ -80,7 +80,9 @@ def lint(dirpath, reg, diagrams, classes):
     where = defaultdict(list)
     for stem, nodes in diagrams.items():
         for nid, n in nodes.items():
-            where[nid].append((stem, n))
+            # <id>_prev 는 같은 저장소의 앞 차례 상태 (grammar.md "입출력")
+            base = nid[:-5] if nid.endswith("_prev") and nid[:-5] in reg else nid
+            where[base].append((stem, n))
     for eid, e in reg.items():
         if e["cls"] not in classes:
             errors.append(f"_elements.md: {eid} 의 색 '{e['cls']}' 가 팔레트에 없다")
@@ -101,7 +103,7 @@ def lint(dirpath, reg, diagrams, classes):
     by_label = defaultdict(set)
     for stem, nodes in diagrams.items():
         for nid, n in nodes.items():
-            if nid in reg:
+            if nid in reg or (nid.endswith("_prev") and nid[:-5] in reg):
                 continue
             key = re.sub(r"\s+", " ", n["label"].lower()).strip()
             by_label[key].add((stem, nid))

@@ -52,6 +52,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .canvas > svg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none !important; }
 .zoom { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 4px; z-index: 2; }
 .zoom .btn { background: #FFFFFF; color: #1F2A35; border-color: #D9DEE3; padding: 4px 10px; }
+.zoom .btn[aria-pressed="true"] { background: #E3ECF6; border-color: #2E5C8A; }
+.zoom .btn[aria-pressed="false"] { text-decoration: line-through; color: #5A6672; }
+.canvas.io-off .edgeLabel.io { display: none; }
 .canvas-hint { position: absolute; left: 12px; bottom: 10px; font-size: 0.78rem; color: #5A6672; z-index: 2; background: rgba(255,255,255,.85); padding: 2px 6px; border-radius: 4px; }
 .canvas .node { cursor: pointer; }
 .canvas .node.drill { cursor: zoom-in; }
@@ -124,6 +127,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         <button class="btn" type="button" id="z-in" aria-label="확대">+</button>
         <button class="btn" type="button" id="z-out" aria-label="축소">−</button>
         <button class="btn" type="button" id="z-fit">맞춤</button>
+        <button class="btn" type="button" id="io-btn" aria-pressed="true" title="선 위의 입출력 라벨을 보이거나 숨긴다. 갈래 라벨(예 · 아니오)은 늘 보인다">입출력</button>
       </div>
       <div class="canvas-hint">휠: 확대 · 끌기: 이동 · 상자 누르기: 정보 · <b>+</b> 표시 상자 두 번 누르기: 들어가기</div>
     </div>
@@ -162,10 +166,11 @@ $('tree').innerHTML = treeHTML('');
 $('tree').addEventListener('click', e => { const b = e.target.closest('.ti'); if (b) go(b.dataset.key); });
 const EL = DATA.elements || {};
 const elIds = Object.keys(EL).filter(id => EL[id].uses.length);
+const nStems = id => new Set(EL[id].uses.map(u => u[0])).size;
 if (elIds.length) {
   $('elist').hidden = false; $('elist-n').textContent = `(${elIds.length})`;
-  $('etree').innerHTML = elIds.map(id => `<li><button class="ti" type="button" data-el="${id}">${esc(EL[id].name)}<small>${EL[id].uses.length}장</small></button></li>`).join('');
-  $('etree').addEventListener('click', e => { const b = e.target.closest('.ti'); if (b) { const k = (cur && EL[b.dataset.el].uses.includes(cur.key)) ? cur.key : EL[b.dataset.el].uses[0]; go(k, b.dataset.el); } });
+  $('etree').innerHTML = elIds.map(id => `<li><button class="ti" type="button" data-el="${id}">${esc(EL[id].name)}<small>${nStems(id)}장</small></button></li>`).join('');
+  $('etree').addEventListener('click', e => { const b = e.target.closest('.ti'); if (!b) return; const us = EL[b.dataset.el].uses; const u = (cur && us.find(x => x[0] === cur.key)) || us[0]; go(u[0], u[1]); });
 }
 if ((DATA.lint || []).length) {
   $('lintbadge').hidden = false; $('lintbadge').textContent = `요소 검사 ${DATA.lint.length}건`;
@@ -212,6 +217,9 @@ function draw() {
     g.addEventListener('dblclick', ev => { ev.stopPropagation(); const t = (d.drill[id] || [])[0]; if (t) go(t); });
     if (d.drill[id]) { g.classList.add('drill'); addBadge(g); }
   });
+  // 입출력 라벨 표시
+  (d.io || []).forEach(e => fig.querySelectorAll(`.edgeLabel [data-id="${e}"]`).forEach(l => l.closest('.edgeLabel').classList.add('io')));
+  $('io-btn').hidden = !(d.io || []).length;
   renderLegend();
 }
 
@@ -235,6 +243,11 @@ function zoomAt(k, cx, cy) {
   view = { x: p.x - (p.x - view.x) * k, y: p.y - (p.y - view.y) * k, w: view.w * k, h: view.h * k }; applyView();
 }
 $('canvas').addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.deltaY > 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY); }, { passive: false });
+let ioOn = true;
+try { ioOn = localStorage.getItem('viewer-io') !== 'off'; } catch (e) {}
+const setIo = on => { ioOn = on; $('canvas').classList.toggle('io-off', !on); $('io-btn').setAttribute('aria-pressed', String(on)); try { localStorage.setItem('viewer-io', on ? 'on' : 'off'); } catch (e) {} };
+$('io-btn').onclick = () => setIo(!ioOn);
+setIo(ioOn);
 $('z-in').onclick = () => zoomAt(1 / 1.3); $('z-out').onclick = () => zoomAt(1.3); $('z-fit').onclick = () => { view = { ...base }; applyView(); };
 let drag = null, moved = false;
 $('canvas').addEventListener('pointerdown', e => {
@@ -257,7 +270,7 @@ function select(id) {
   fig && fig.querySelectorAll('.sel').forEach(e => e.classList.remove('sel'));
   sel = id;
   if (id && nodeEl[id]) nodeEl[id].classList.add('sel');
-  document.querySelectorAll('#etree .ti').forEach(b => b.setAttribute('aria-current', String(b.dataset.el === id)));
+  document.querySelectorAll('#etree .ti').forEach(b => b.setAttribute('aria-current', String(!!id && (b.dataset.el === id || b.dataset.el + '_prev' === id))));
   setPanel('info');
   const d = cur, info = $('p-info');
   if (!id || !d.nodes[id]) {
@@ -272,7 +285,8 @@ function select(id) {
   } else {
     const n = d.nodes[id];
     const drills = d.drill[id] || [];
-    const shared = EL[id];
+    const baseId = EL[id] ? id : (id.endsWith('_prev') && EL[id.slice(0, -5)] ? id.slice(0, -5) : null);
+    const shared = baseId ? EL[baseId] : null;
     const same = shared ? [] : (labelIndex[norm(n.label)] || []).filter(([k, nid]) => !(k === d.key && nid === id));
     info.innerHTML = `
       <h3>${esc(n.label)}</h3>
@@ -281,9 +295,9 @@ function select(id) {
       ${drills.length ? `<div class="kv"><b>들어가기</b><div class="links">${drills.map(t => `<button class="btn" data-go="${t}">${esc(byKey[t].title)}<small>${esc(byKey[t].question || '')}</small></button>`).join('')}</div></div>` : ''}
       ${d.outside[id] ? `<div class="kv"><b>연결된 문서 (그림 없음)</b><span class="m"><code>${esc(d.outside[id])}</code></span></div>` : ''}
       ${shared ? `<div class="kv"><b>공유 요소 · ${esc(shared.name)}</b>${shared.desc ? `<span class="m">${tipify(shared.desc)}</span>` : ''}</div>
-        <div class="kv"><b>이 요소가 나오는 그림 (${shared.uses.length})</b><div class="links">${shared.uses.map(k => k === d.key
-          ? `<button class="btn" disabled aria-current="true">${esc(byKey[k].title)}<small>지금 보는 그림</small></button>`
-          : `<button class="btn" data-go="${k}" data-node="${id}">${esc(byKey[k].title)}<small>라벨: ${esc(byKey[k].nodes[id].label)}</small></button>`).join('')}</div></div>` : ''}
+        <div class="kv"><b>이 요소가 나오는 그림 (${new Set(shared.uses.map(u => u[0])).size})</b><div class="links">${shared.uses.map(([k, nid]) => (k === d.key && nid === id)
+          ? `<button class="btn" disabled aria-current="true">${esc(byKey[k].title)}<small>지금 보는 상자</small></button>`
+          : `<button class="btn" data-go="${k}" data-node="${nid}">${esc(byKey[k].title)}<small>라벨: ${esc(byKey[k].nodes[nid].label)}</small></button>`).join('')}</div></div>` : ''}
       ${same.length ? `<div class="kv"><b>같은 라벨이 나오는 다른 그림</b><div class="links">${same.map(([k, nid]) => `<button class="btn" data-go="${k}" data-node="${nid}">${esc(byKey[k].title)}</button>`).join('')}</div></div>` : ''}
       <div class="kv"><b>id</b><span class="m"><code>${esc(id)}</code></span></div>`;
   }
@@ -336,7 +350,7 @@ $('q').addEventListener('input', () => {
   if (!q) { res.hidden = true; return; }
   const hits = [];
   D.forEach(d => { if (norm(d.title + ' ' + d.question).includes(q)) hits.push({ k: d.key, t: d.title, s: '그림' }); });
-  elIds.forEach(id => { if (norm(EL[id].name + ' ' + id + ' ' + EL[id].desc).includes(q)) hits.push({ k: EL[id].uses[0], n: id, t: EL[id].name, s: `공유 요소 · ${EL[id].uses.length}장` }); });
+  elIds.forEach(id => { if (norm(EL[id].name + ' ' + id + ' ' + EL[id].desc).includes(q)) hits.push({ k: EL[id].uses[0][0], n: EL[id].uses[0][1], t: EL[id].name, s: `공유 요소 · ${nStems(id)}장` }); });
   D.forEach(d => Object.entries(d.nodes).forEach(([id, n]) => { if (norm(n.label).includes(q)) hits.push({ k: d.key, n: id, t: n.label, s: d.title }); }));
   res.innerHTML = hits.slice(0, 40).map(h => `<button type="button" data-go="${h.k}" ${h.n ? `data-node="${h.n}"` : ''}>${esc(h.t)}<small>${esc(h.s)}</small></button>`).join('') || '<p class="empty" style="padding:8px 10px">찾은 것이 없다.</p>';
   res.hidden = false;
