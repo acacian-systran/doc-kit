@@ -89,5 +89,5 @@ ln -s ~/projects/doc-kit/skills/korean-report-style \
 
 - **mermaid-diagram 뷰어 · 그림 재생** (2026-11-06, 아이디어 단계). 상태가 바뀌거나 반복이 있는 흐름 그림에 ▶ 재생을 붙이는 것 — 단계마다 지금 상자 · 선을 강조하고, 그 단계의 실제 값(실행 파일 · 상태)을 옆에 보임. 그림을 이해하는 용도와 함께, 시뮬레이션이 안 이어지는 곳에서 그림의 끊긴 길이 드러남.
   - 시험 2개(rdb2ontology): 새로 그린 FK-BFS 재생, 원본 SVG 위 L1 재생(`paper/evidence/figures/internal/levels/play/`). 사용자 평은 "엄청 마음에 들진 않음", 구체적 피드백은 아직 없음 → 뷰어에 넣기 전에 형태부터 다시 정할 것.
-  - 바라는 것: 따라가기 중에도 확대 · 축소(휠 · 버튼)가 되어야 함 — 지금 L1 재생은 따라가기 배율이 고정이라, 키우려면 따라가기를 꺼야 함.
+  - 바라는 것: 따라가기 중에도 확대 · 축소(휠 · 버튼)가 되어야 함. rdb2ontology 재생(`levels/play/egov-play.html`, 그림 6장)에는 넣음 — 뷰어로 옮길 때 같이.
   - 붙일 때 주의: mermaid SVG의 id(`my-svg`)를 바꾸면 그림 스타일이 모두 빠짐, 페이지 CSS 클래스가 그림 classDef 이름(`file` · `step` · `table` …)과 겹치면 안 됨.
