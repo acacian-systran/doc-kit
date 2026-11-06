@@ -339,6 +339,7 @@ function select(id) {
     const same = shared ? [] : (labelIndex[norm(n.label)] || []).filter(([k, nid]) => !(k === d.key && nid === id));
     info.innerHTML = `
       <h3>${esc(n.label)}</h3>
+      ${n.more ? `<div class="kv"><b>설명</b><span>${markTerms(n.more, d.terms)}</span></div>` : ''}
       <div class="kv"><b>모양</b><span>${esc(n.shape)}</span><span class="m">${tipify(n.shapeMeaning)}</span></div>
       ${n.cls ? `<div class="kv"><b>색</b><span>${esc(n.cls)}${n.clsLook ? ' · ' + esc(n.clsLook) : ''}</span><span class="m">${tipify(n.clsMeaning)}</span></div>` : ''}
       ${termsOf(id).length ? `<div class="kv"><b>이 상자의 용어</b><div class="tdefs">${termsOf(id).map(t => `<div class="tdef"><span><b>${esc(t.match[0])}</b>${termNote(t)}</span><span class="d">${esc(t.def)}</span></div>`).join('')}</div></div>` : ''}
@@ -404,11 +405,11 @@ function renderTerms() {
   $('tab-terms').textContent = ts.length ? `용어 ${ts.length}` : '용어';
   if (!ts.length) { box.innerHTML = '<p class="empty">이 그림에는 실린 용어 설명이 없다. .mmd 에 <code>%% 용어:</code> 줄을 두면 생긴다.</p>'; return; }
   box.innerHTML = `<p class="hint">올리면 그 용어가 든 상자만 켜진다. 누르면 고정.</p>` + ts.map((t, i) =>
-    `<button class="trow" type="button" data-i="${i}" aria-pressed="false"><span><b>${esc(t.match.join(' · '))}</b>${termNote(t)}</span><span class="d">${esc(t.def)}</span><span class="where">${t.nodes.length ? `상자 ${t.nodes.length}개` : ''}${t.nodes.length && t.head ? ' · ' : ''}${t.head ? '제목 · 질문' : ''}</span></button>`).join('');
+    `<button class="trow" type="button" data-i="${i}" aria-pressed="false"><span><b>${esc(t.match.join(' · '))}</b>${termNote(t)}</span><span class="d">${esc(t.def)}</span><span class="where">${[t.nodes.length ? `상자 ${t.nodes.length}개` : '', (t.edges || []).length ? `선 ${t.edges.length}개` : '', t.head ? '제목 · 질문' : ''].filter(Boolean).join(' · ')}</span></button>`).join('');
   const show = i => {
     fig.querySelectorAll('.hl').forEach(e => e.classList.remove('hl'));
-    if (i === null || !ts[i].nodes.length) { fig.classList.remove('focusing'); return; }
-    fig.classList.add('focusing'); ts[i].nodes.forEach(n => nodeEl[n] && nodeEl[n].classList.add('hl'));
+    if (i === null || !(ts[i].nodes.length || (ts[i].edges || []).length)) { fig.classList.remove('focusing'); return; }
+    fig.classList.add('focusing'); elsFor(fig, nodeEl, ts[i]).forEach(e => e.classList.add('hl'));
   };
   box.querySelectorAll('.trow').forEach(b => {
     const i = +b.dataset.i;

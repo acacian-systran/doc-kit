@@ -21,6 +21,8 @@
 그림 디렉터리나 그 위의 `용어.md` · `glossary.md`)의 그 행 뜻을 뷰어에 싣는다. `글자=용어집 키` 는
 그림에 적힌 글자와 용어집 행 이름이 다를 때(같은 기호가 두 뜻일 때) 쓴다. 뜻은 그림 위에 붙이지 않고
 상자를 눌렀을 때 정보 칸 · 정보 칸의 "용어" 탭 · 제목과 질문의 점선 밑줄 tooltip 에만 나온다.
+`%% 설명 <상자 id>: 글` 은 그 상자를 눌렀을 때 정보 칸 맨 위에만 나오는 부연이다(모델 · 개수 · 검사 목록처럼
+상자에 쓰면 덕지덕지해지는 것).
 
 디렉터리에 `_elements.md`(공유 요소 목록, elements_lint.py 참고)가 있으면 그 id 의 요소는
 "이 요소가 나오는 그림"을 모두 보여 주고, 목록 아래에 공유 요소 목록이 붙는다. 없으면 라벨
@@ -59,6 +61,7 @@ def read_diagram(mmd, vocab, palette_boxes):
         _, _, nodes, edges, _ = lp.parse_mmd(mmd)
         # 입출력 라벨: 마름모에서 나가지 않는 선의 라벨 (마름모에서 나가면 갈래 라벨)
         d["io"] = [e[4] for e in edges if e[3] and nodes.get(e[0], {}).get("shape") != "diam"]
+        d["elabels"] = [[e[4], re.sub(r"<br\s*/?>", " ", e[3])] for e in edges if e[3]]
         ex, _, _, _ = lp.build_example(mmd, vocab, None, palette_boxes)
         d["rows"], d["unused"], d["flow"] = ex["rows"], ex["unused"], True
         cls_of = {c["cls"]: c for c in vocab["classes"]}
@@ -74,6 +77,12 @@ def read_diagram(mmd, vocab, palette_boxes):
             }
     except SystemExit as e:  # flowchart 가 아닌 그림: 보기만 한다
         d["skip_reason"] = str(e)
+    # 상자 설명: 그림에는 안 싣고, 상자를 눌렀을 때 정보 칸에만
+    for nid, more in re.findall(r"^%%\s*설명\s+(\S+?):\s*(.+)$", text, re.M):
+        if nid in d["nodes"]:
+            d["nodes"][nid]["more"] = more.strip()
+        else:
+            print(f"! 설명의 상자 id 없음: {mmd.name} · {nid}", file=sys.stderr)
     d["clicks"] = re.findall(r'^\s*click\s+(\w+)\s+href\s+"([^"]+)"', text, re.M)
     sm = re.search(r"%%\s*요약 그림\s+(\S+)\s+의\s+(.+?)\s*상자를 펼친 것", text)
     d["step_of"] = (sm.group(1), sm.group(2)) if sm else None
@@ -113,8 +122,14 @@ def read_glossary(path):
         di, ti, pi = col("뜻", "정의", "Definition", "meaning"), col("번역"), col("쪽", "page")
         if di is None or di >= len(cells):
             continue
-        key = cells[0].strip("`").strip()
-        row = {"name": key, "tr": cells[ti] if ti is not None and ti < len(cells) and cells[ti] != key else "",
+        # 키 열: 머리글이 '용어' · '말' · '기호' 인 열, 없으면 첫 열. 링크 · 백틱은 벗긴다
+        ki = next((i for i, h in enumerate(head) if h in ("용어", "말", "기호", "term", "Term")), 0)
+        if ki >= len(cells) or ki == di:
+            continue
+        key = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", cells[ki]).replace("`", "").strip()
+        if not key:
+            continue
+        row = {"name": key, "tr": cells[ti].replace("`", "") if ti is not None and ti < len(cells) and cells[ti] != key else "",
                "def": re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", cells[di]).replace("`", ""), "page": cells[pi] if pi is not None and pi < len(cells) else ""}
         out.setdefault(key, row)
         m = re.fullmatch(r"(.+?) \(([A-Z]{2,6})\)", key)  # foreign key (FK) → foreign key, FK
@@ -139,15 +154,18 @@ def attach_terms(d, text, glossary, warn):
         if not row:
             warn(f"용어집에 없음: {d['file']} · {key}")
             continue
-        t = terms.setdefault(row["name"], {**row, "match": [], "nodes": [], "head": False})
+        t = terms.setdefault(row["name"], {**row, "match": [], "nodes": [], "edges": [], "head": False})
         t["match"].append(shown)
         pat = re.compile(rf"(?<![{BOUND}]){re.escape(shown)}(?![{BOUND}])")
         for nid, n in d["nodes"].items():
-            if pat.search(n["label"]) and nid not in t["nodes"]:
+            if (pat.search(n["label"]) or pat.search(n.get("more", ""))) and nid not in t["nodes"]:
                 t["nodes"].append(nid)
+        for eid, lab in d.get("elabels", []):
+            if pat.search(lab) and eid not in t["edges"]:
+                t["edges"].append(eid)
         if pat.search(d["title"] + " " + d["question"]):
             t["head"] = True
-        if not t["nodes"] and not t["head"]:
+        if not t["nodes"] and not t["edges"] and not t["head"]:
             warn(f"그림에 안 나옴: {d['file']} · {shown}")
     d["terms"] = list(terms.values())
 
@@ -184,14 +202,20 @@ def link(diagrams):
     parent = {d["key"]: d.get("step_parent") for d in diagrams}
     outs = {d["key"]: [t for ts in d["drill"].values() for t in ts if not keyed[t].get("step_parent")] for d in diagrams}
     seen = {k for k, v in parent.items() if v}
-    order = sorted(diagrams, key=lambda d: (-len(outs[d["key"]]), d["stem"]))
+    expanded = set()
+    # 요약 그림(펼침 부모가 없는 것)부터, 이미 자리가 있는 펼침 그림도 그 click 을 따라간다
+    targets = {t for ts in outs.values() for t in ts}
+    order = sorted(diagrams, key=lambda d: (d["key"] in targets, bool(parent[d["key"]]), -len(outs[d["key"]]), d["stem"]))
     for root in order:
-        if root["key"] in seen:
+        if root["key"] in expanded:
             continue
         seen.add(root["key"])
         queue = [root["key"]]
         while queue:
             k = queue.pop(0)
+            if k in expanded:
+                continue
+            expanded.add(k)
             for t in outs[k]:
                 if t not in seen:
                     seen.add(t)
@@ -199,7 +223,7 @@ def link(diagrams):
                     queue.append(t)
     for d in diagrams:
         d["parent"] = parent[d["key"]]
-        for k in ("clicks", "step_of"):
+        for k in ("clicks", "step_of", "elabels"):
             d.pop(k, None)
 
 
