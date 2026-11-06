@@ -26,7 +26,7 @@ skills/
 
 | 스킬 | 역할 | 묶음 |
 |------|------|------|
-| `mermaid-diagram`     | 아키텍처·순서·상태·ER·일정 그림을 Mermaid 소스로 그려 SVG 로 렌더 | 단독 |
+| `mermaid-diagram`     | 아키텍처·순서·상태·ER·일정 그림을 Mermaid 소스로 그려 SVG 로 렌더. 처음 보는 사람용 **그림 읽는 법 페이지**(기호 전체 + 고른 예시 그림에서 항목을 누르면 쓰인 곳만 켜짐)도 만든다 | 단독 |
 | `explain-diff-html`   | 코드 변경(diff/PR)을 한국어 인터랙티브 HTML 문서로 설명 | 단독 |
 | `explain-ladder`      | 검토자의 질문에 답하는 가장 단순한 포맷을 골라 설명 — 글(STE) → Mermaid → 인터랙티브 HTML → Manim 영상(요청 시), 끝에 확인된 사실·추론·불확실 구분 | 단독 |
 | `paper-tutor`         | 논문 공부 — 읽기 전 용어집(prep) · 원문 앵커 Q&A(ask) · 메커니즘 중심 노트(read) · 대화형 퀴즈(quiz) | 단독 |
@@ -79,6 +79,8 @@ ln -s ~/projects/doc-kit/skills/korean-report-style \
 `skills/<skill-name>/SKILL.md` 를 만들고, frontmatter에 `name` 과 `description` 을 넣는다.
 `description` 은 Claude가 언제 이 스킬을 쓸지 판단하는 기준이므로, 트리거가 될 표현
 (한국어 표현 포함)을 구체적으로 적는다.
+
+처음 쓰는 사람이 알아 두면 좋은 기능이 있으면 스킬 디렉터리에 `.install-hint` 를 두고 한 줄로 적는다. `install.sh` 가 설치 끝에 모아 보여 준다.
 
 여러 스킬이 서로를 전제한다면 `skills/<bundle>/` 아래로 묶고, 번들 README에 역할 분담과
 왜 갈라 뒀는지를 적는다. 위의 표에도 한 줄 추가한다.

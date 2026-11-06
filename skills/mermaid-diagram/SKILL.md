@@ -1,6 +1,6 @@
 ---
 name: mermaid-diagram
-description: Draw architecture, pipeline, sequence, state, ER and schedule diagrams as Mermaid source (.mmd) that renders natively in GitHub · Notion · mermaid.ai and to SVG via mermaid-cli, using a fixed Korean visual vocabulary — shape means storage kind, color means role — so structure reads before labels. Starts from a brief (diagram type + question + key elements, the prompt structure Mermaid AI recommends) so a request can be turned into a template fill-in. Use whenever the user wants a system diagram, data-flow or pipeline diagram, module or runtime/infra diagram, call sequence, state machine, ER diagram, gantt/일정표, or asks to 아키텍처 그림·다이어그램·구조도·플로우·순서도·상태도·ERD·mermaid·머메이드 를 그려달라, and when revising or reviewing existing .mmd files or ```mermaid blocks, or setting up a docs/diagrams directory. Provides the palette, six templates, the grammar with its parser pitfalls, a render script, and the conventions for the diagram directory's README.
+description: Draw architecture, pipeline, sequence, state, ER and schedule diagrams as Mermaid source (.mmd) that renders natively in GitHub · Notion · mermaid.ai and to SVG via mermaid-cli, using a fixed Korean visual vocabulary — shape means storage kind, color means role — so structure reads before labels. Starts from a brief (diagram type + question + key elements, the prompt structure Mermaid AI recommends) so a request can be turned into a template fill-in. Use whenever the user wants a system diagram, data-flow or pipeline diagram, module or runtime/infra diagram, call sequence, state machine, ER diagram, gantt/일정표, or asks to 아키텍처 그림·다이어그램·구조도·플로우·순서도·상태도·ERD·mermaid·머메이드 를 그려달라, and when revising or reviewing existing .mmd files or ```mermaid blocks, or setting up a docs/diagrams directory. Also builds a 그림 읽는 법 page for people new to the vocabulary — every shape, color, line and container with its meaning, plus an optional tab on one diagram the user picks where hovering an item lights up only the boxes and lines that use it — when someone asks 이 그림 어떻게 읽어 · 기호 뜻 · 범례 · 그림 읽는 법 · 읽는 법 페이지 · legend. Provides the palette, six templates, the grammar with its parser pitfalls, a render script, the legend-page generator, and the conventions for the diagram directory's README.
 ---
 
 # Mermaid 다이어그램
@@ -26,6 +26,9 @@ description: Draw architecture, pipeline, sequence, state, ER and schedule diagr
 | `assets/render.sh` | `.mmd` → `.svg`/`.png`, 마크다운의 펜스도. npx 로 mermaid-cli 를 부른다 |
 | `assets/sync_palette.py` | 팔레트를 고쳤을 때 모든 그림에 다시 뿌린다 |
 | `assets/mermaid.config.json` | 렌더 기본 설정 — base 테마 · 한글 글꼴 · 간트 색 |
+| `assets/legend.html` | 그림 기호 읽는 법 — 기호 전체. 미리 만들어 둔 것. 처음 보는 사람에게 그대로 준다 |
+| `assets/legend_page.py` | 읽는 법 페이지 생성기. 뜻은 grammar.md · 팔레트에서 읽는다. `--example` 로 예시 그림 탭을 더한다 |
+| `assets/legend.template.html` | 위 페이지의 틀 |
 
 템플릿마다 `.svg` 가 옆에 있다. 파일을 열지 않고도 뼈대가 어떻게 생겼는지 볼 수 있다.
 
@@ -116,3 +119,46 @@ README 의 "답하는 질문" 표에 줄을 더하고, 축의 뜻이 기본형�
 브리프를 역으로 뽑는다 — 이 그림이 답하는 질문이 무엇인지 한 문장으로 쓰고, 안 되면
 그림이 둘 이상 섞인 것이다. 인라인 `style` · 색상값이 박혀 있으면 팔레트 클래스로 옮긴다.
 `linkStyle` 순번은 선의 종류(`==>` · `-->` · `-.->`)로 바꾼다.
+
+## 7. 그림 읽는 법 페이지
+
+이 어휘를 모르는 사람은 실린더 · 주황 · 점선이 무슨 뜻인지 모른다. 읽는 법 페이지가 그
+설명을 맡는다. HTML 한 장이고, 뜻과 색은 손으로 옮겨 적지 않고 `grammar.md` 의 어휘 표와
+`_palette.mmd` 에서 읽는다.
+
+**기호 전체 — 스킬을 처음 보는 사람이 설명을 원할 때.** "이 그림 어떻게 읽어", "기호 뜻이
+뭐야" 같은 질문이 오면 `assets/legend.html` 을 그대로 준다(아티팩트로 올리거나 파일로).
+모양 · 색 · 선 · 묶음 전부와, 헷갈리는 짝(같은 바탕색을 무엇으로 가르나)이 들어 있다.
+프로젝트가 팔레트에 클래스를 더했으면 그 팔레트로 다시 만든다.
+
+```bash
+python3 <스킬 경로>/assets/legend_page.py --palette docs/diagrams/_palette.mmd -o 그림-읽는-법.html
+```
+
+**예시 탭 — 예시 그림은 쓰는 사람이 고른다.** 어느 그림을 예로 들지 사용자에게 묻는다.
+지금 보고 있는 그림이 있으면 그것을 기본값으로 제안한다. flowchart 만 받는다.
+
+1. `--list` 로 그 그림에 쓰인 기호와 notes 키를 본다.
+   ```bash
+   python3 <스킬 경로>/assets/legend_page.py --example <디렉터리>/<이름>.mmd --list
+   ```
+2. notes JSON 을 쓴다 — `reading`(읽는 순서 3–6줄, 굵은 선 → 마름모 → 점선 → 색 순)과
+   `items`(키마다 "이 그림에서 무엇이 그 기호인가" 한두 문장). 쓰지 않은 키는 노드 라벨
+   나열로 채워진다. 문장은 그림의 근거(`%%` 주석 · 근거 문서)에 있는 것만 쓴다.
+3. 렌더된 `.svg` 가 있어야 한다(`render.sh`). 만든다.
+   ```bash
+   python3 <스킬 경로>/assets/legend_page.py --example <이름>.mmd --notes notes.json -o <이름>-읽는-법.html
+   ```
+
+예시 탭에서는 항목에 마우스를 올리거나 누르면 그 기호를 쓴 노드와 선만 진하게 남고 나머지는
+흐려진다. 그림에 없는 기호는 칩으로 따로 보인다. 스크립트가 경고(`! 팔레트에 없는 클래스`,
+`! notes 의 키가 그림에 없음`)를 내면 고친 뒤 다시 만든다.
+
+**먼저 제안하는 때.** 다음 때 한 줄로 제안한다 — "이 기호를 처음 보는 사람을 위한 읽는 법
+페이지를 만들 수 있다(예시 그림은 고를 수 있다)."
+- 한 프로젝트에서 처음으로 그림을 그려 넘길 때
+- 그림 디렉터리를 세우거나 다른 사람에게 넘길 때
+
+그림 디렉터리 README 에 이미 읽는 법 링크가 있으면 제안하지 않는다. 사용자가 한 번 거절하면
+그 프로젝트에서 다시 제안하지 않는다. 만들었으면 README 의 "읽는 법" 절에 링크를 단다
+(`references/diagrams-readme.md`).

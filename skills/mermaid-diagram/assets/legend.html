@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>그림 기호 읽는 법</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<!--
+  legend_page.py 가 만든 파일이다. 손으로 고치지 말고 다시 만든다.
+  이 틀은 assets/legend.template.html 이다. 스크립트는 DATA 자리와 SVG 자리만 갈아 끼운다.
+-->
+<style>
+/* Layout: 좁은 본문 한 단 + 기호 카드 격자. 견본은 그림과 같은 밝은 종이(--paper) 위에 그린다. */
+:root {
+  --bg: #F6F7F8; --surface: #FFFFFF; --fg: #1F2A35; --muted: #5A6672; --line: #D9DEE3;
+  --accent: #2E5C8A; --accent-soft: #E3ECF6; --paper: #FFFFFF; --hl: #D97706;
+  --tip-bg: #1F2A35; --tip-fg: #F6F7F8;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14191F; --surface: #1C232B; --fg: #E4E8EC; --muted: #9AA6B2; --line: #2E3843;
+    --accent: #8DB4DE; --accent-soft: #233244; --paper: #EEF0F2; --hl: #F59E0B;
+    --tip-bg: #E4E8EC; --tip-fg: #14191F; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14191F; --surface: #1C232B; --fg: #E4E8EC; --muted: #9AA6B2; --line: #2E3843;
+  --accent: #8DB4DE; --accent-soft: #233244; --paper: #EEF0F2; --hl: #F59E0B;
+  --tip-bg: #E4E8EC; --tip-fg: #14191F; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.65; }
+.page {
+  max-width: 1080px; margin: 0 auto; overflow-x: clip;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 36px 72px;
+}
+h1, h2, h3 { text-wrap: balance; line-height: 1.3; margin: 0; }
+h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.3rem; font-weight: 700; }
+h3 { font-size: 1rem; font-weight: 700; }
+p { margin: 0; }
+code { font-family: var(--f-mono); font-size: 0.82em; background: var(--accent-soft); color: var(--fg); padding: 1px 5px; border-radius: 4px; white-space: nowrap; }
+.lede { color: var(--muted); max-width: 64ch; margin-top: 10px; }
+.axes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
+.axis { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.axis b { display: block; font-size: 0.78rem; letter-spacing: 0.08em; color: var(--accent); }
+.axis span { display: block; margin-top: 2px; }
+.tabs { display: flex; gap: 4px; margin-top: 28px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tab { font: inherit; font-weight: 500; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); padding: 10px 14px; cursor: pointer; margin-bottom: -1px; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tab:focus-visible, .row:focus-visible, .term:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+section.part { display: grid; gap: 40px; margin-top: 28px; }
+.sec-head { display: grid; gap: 6px; margin-bottom: 14px; }
+.sec-head p { color: var(--muted); max-width: 66ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; grid-template-rows: auto auto 1fr; gap: 8px; min-width: 0; }
+.tile { background: var(--paper); border-radius: 6px; height: 76px; display: grid; place-items: center; }
+.tile svg { width: 150px; height: 64px; overflow: visible; }
+.card .name { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.card .desc { color: var(--muted); font-size: 0.92rem; }
+.callout { margin-top: 12px; background: var(--accent-soft); border-radius: 8px; padding: 12px 14px; font-size: 0.93rem; max-width: 74ch; }
+.callout + .callout { margin-top: 8px; }
+.rules { display: grid; gap: 10px; max-width: 74ch; padding-left: 1.2em; margin: 0; }
+.hint { font-size: 0.85rem; color: var(--muted); }
+.ex { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 28px; align-items: start; }
+.fig { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin: 0; }
+.fig svg { display: block; width: 100%; height: auto; max-height: calc(100vh - 60px); }
+.fig figcaption { color: #5A6672; font-size: 0.8rem; margin-top: 6px; text-align: center; }
+.groups { display: grid; gap: 28px; min-width: 0; }
+.rows { display: grid; gap: 6px; }
+.row { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: center; text-align: left; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; }
+.row .tile { height: 52px; }
+.row .tile svg { width: 90px; height: 44px; }
+.row:hover, .row.on { border-color: var(--hl); }
+.row.on { box-shadow: inset 3px 0 0 var(--hl); }
+.row b { display: block; font-weight: 500; }
+.row .where { display: block; font-size: 0.88rem; color: var(--muted); }
+ol.read { display: grid; gap: 10px; padding-left: 1.3em; margin: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 0.85rem; border: 1px dashed var(--line); border-radius: 999px; padding: 2px 10px; color: var(--muted); }
+.fig .node, .fig .edgePaths path, .fig .edgeLabel { transition: opacity .15s; }
+.fig svg.focusing .node:not(.hl), .fig svg.focusing .edgePaths path:not(.hl), .fig svg.focusing .edgeLabel:not(.hl), .fig svg.focusing .cluster:not(.hl) { opacity: 0.14; }
+.fig .node.hl .label-container, .fig .node.hl path, .fig .node.hl polygon, .fig .node.hl rect, .fig .cluster.hl rect { filter: drop-shadow(0 0 3px #D97706) drop-shadow(0 0 1px #D97706); }
+.term { border-bottom: 1px dotted currentColor; cursor: help; position: relative; }
+.term::after {
+  content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 6px); z-index: 20;
+  width: max-content; max-width: min(260px, 70vw); white-space: normal;
+  background: var(--tip-bg); color: var(--tip-fg); font-size: 0.82rem; line-height: 1.5; font-weight: 400;
+  padding: 7px 10px; border-radius: 6px; opacity: 0; pointer-events: none; transition: opacity .12s;
+}
+.term:hover::after, .term:focus::after { opacity: 1; }
+@media (max-width: 760px) {
+  .axes, .ex { grid-template-columns: minmax(0, 1fr); }
+  .fig { top: calc(env(safe-area-inset-top, 0px) + 4px); z-index: 5; padding: 6px; }
+  .fig svg { max-height: 38vh; }
+  .fig figcaption { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="lg-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8A94A0"/></marker>
+    <marker id="lg-xx" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M1,1 L9,9 M9,1 L1,9" stroke="#8A94A0" stroke-width="1.8" fill="none"/></marker>
+  </defs>
+</svg>
+
+<div class="page">
+  <header>
+    <h1>그림 기호 읽는 법</h1>
+    <p class="lede" id="lede"></p>
+    <div class="axes">
+      <div class="axis"><b>모양</b><span>그것이 무엇인가. 단계인지, DB 인지, 파일인지.</span></div>
+      <div class="axis"><b>색</b><span>무슨 역할인가. 외부인지, LLM 이 닿는지, 거르는지.</span></div>
+      <div class="axis"><b>선</b><span>무엇이 오가나. 굵은 선만 따라가면 전체가 읽힌다.</span></div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs" hidden>
+    <button class="tab" role="tab" id="tab-all" aria-controls="all" data-view="all">전체 기호</button>
+    <button class="tab" role="tab" id="tab-example" aria-controls="example" data-view="example"></button>
+  </nav>
+
+  <section class="part" id="all" role="tabpanel">
+    <div>
+      <div class="sec-head"><h2 id="h-shapes"></h2><p>모양은 그것이 무엇인지를 말한다. 특히 무엇을 보관하는 곳인지를 가른다.</p></div>
+      <div class="grid" id="shapes"></div>
+    </div>
+    <div>
+      <div class="sec-head"><h2 id="h-colors"></h2><p>색은 역할을 말한다. 일부 색은 짝이 되는 모양이 정해져 있다. 견본은 짝 모양으로 그렸다.</p></div>
+      <div class="grid" id="colors"></div>
+      <div id="callouts"></div>
+    </div>
+    <div>
+      <div class="sec-head"><h2 id="h-lines"></h2><p>선은 굵기와 무늬로 뜻을 가른다. 선 색은 모두 같은 회색이다.</p></div>
+      <div class="grid" id="lines"></div>
+    </div>
+    <div>
+      <div class="sec-head"><h2 id="h-boxes"></h2><p>여러 상자를 테두리 하나로 묶을 때 쓴다. 점선과 실선은 뜻이 다르다.</p></div>
+      <div class="grid" id="boxes"></div>
+      <p class="callout">"같이 묶여 있나"와 "같이 죽나"는 다른 질문이다. 점선 묶음은 앞의 질문에, 굵은 실선 묶음은 뒤의 질문에 답한다.</p>
+    </div>
+    <div>
+      <div class="sec-head"><h2>그 밖의 약속</h2></div>
+      <ul class="rules">
+        <li><strong>조건은 마름모로 그린다.</strong> 라벨 안의 괄호는 조건이 아니라 부연이다.</li>
+        <li><strong>구현 여부는 그리지 않는다.</strong> 붉은 점선(미확정)은 "아직 안 만들었다"가 아니라 "설계가 아직 정하지 않았다"는 뜻이다.</li>
+        <li><strong>단계 번호는 실행 순서를 묻는 그림에만 붙인다.</strong></li>
+        <li><strong>범례는 상자가 20개를 넘을 때만 그림 안에 둔다.</strong> 그보다 작은 그림은 이 페이지를 범례로 쓴다.</li>
+        <li><strong>그림 하나는 질문 하나에 답한다.</strong> 그림 파일 맨 위의 <code>%% 답하는 질문:</code> 주석에 그 질문이 있다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="part" id="example" role="tabpanel" hidden>
+    <div class="ex">
+      <figure class="fig" id="fig">
+
+        <figcaption id="figcap"></figcaption>
+      </figure>
+      <div class="groups">
+        <div id="ex-read">
+          <div class="sec-head"><h2>이 그림을 읽는 순서</h2><p id="ex-question"></p></div>
+          <ol class="read" id="ex-steps"></ol>
+        </div>
+        <div id="ex-g-shape"><div class="sec-head"><h2 id="ex-h-shape"></h2><p class="hint">항목을 누르면 고정되고, 한 번 더 누르면 풀린다.</p></div><div class="rows" id="ex-shape"></div></div>
+        <div id="ex-g-class"><div class="sec-head"><h2 id="ex-h-class"></h2></div><div class="rows" id="ex-class"></div></div>
+        <div id="ex-g-line"><div class="sec-head"><h2 id="ex-h-line"></h2></div><div class="rows" id="ex-line"></div></div>
+        <div id="ex-g-box"><div class="sec-head"><h2 id="ex-h-box"></h2></div><div class="rows" id="ex-box"></div></div>
+        <div id="ex-g-unused"><div class="sec-head"><h2>이 그림에는 없는 것</h2><p>아래 기호는 이 그림에 나오지 않는다. 뜻은 "전체 기호" 탭에 있다.</p></div><div class="chips" id="ex-unused"></div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const DATA = {"lede": "이 그림들은 같은 기호 한 벌로 그린다. 라벨을 읽기 전에 모양 · 색 · 선만 보고 구조를 먼저 읽을 수 있게 하려는 것이다. 이 페이지는 기호 전체를 다룬다.", "terms": {"정본": "잃으면 복구가 어렵거나 비싼 원본 데이터. 다른 것은 여기서 다시 만들 수 있다.", "트리거": "실행을 시작하게 하는 것. 예: 예약 실행(cron), 사람, HTTP 요청.", "축": "그림의 중심 흐름. 레이아웃 엔진이 이 선들을 한 줄로 세운다.", "배포 경계": "한 번에 올라가고 한 번에 내려가는 단위. 예: 서버 한 대, 컨테이너 하나.", "LLM": "대형 언어 모델. 같은 입력에도 다른 출력을 낼 수 있다.", "비동기": "보내 놓고 답을 기다리지 않는 흐름. 결과는 나중에 따로 받는다."}, "vocab": {"shapes": [{"key": "rect", "name": "사각형", "syntax": "[x]", "meaning": "단계 · 그 밖의 것."}, {"key": "cyl", "name": "실린더", "syntax": "[(x)]", "meaning": "DB — 행을 보관하는 곳."}, {"key": "doc", "name": "문서", "syntax": "shape: doc", "meaning": "파일시스템. 아래가 물결이다."}, {"key": "hex", "name": "육각형", "syntax": "{{x}}", "meaning": "트리거 — 무엇이 실행을 부르나. 우리 시스템 안이 아니다."}, {"key": "diam", "name": "마름모", "syntax": "{x}", "meaning": "조건 게이트 — 여기서 대상이 줄어든다."}, {"key": "sub", "name": "서브루틴", "syntax": "[[x]]", "meaning": "다른 그림에 있는 것 — 여기서 펴지 않는다. 양옆의 세로줄이 표시다."}, {"key": "stad", "name": "스타디움", "syntax": "([x])", "meaning": "시작 · 끝 (필요할 때만)."}], "classes": [{"cls": "ext", "name": "외부", "meaning": "우리가 만들지 않은 것. 외부 API · 남의 모듈.", "look": "회색 점선", "pair": "rect", "style": {"fill": "#F4F5F6", "stroke": "#8A94A0", "dash": "4 3", "color": "#5A6672"}}, {"cls": "trigger", "name": "트리거", "meaning": "무엇이 실행을 부르나. cron · 사람 · HTTP 요청.", "look": "노랑", "pair": "hex", "style": {"fill": "#FEF8E6", "stroke": "#B8941F", "color": "#6B5511"}}, {"cls": "step", "name": "단계", "meaning": "무언가를 하는 곳.", "look": "파랑", "pair": "rect", "style": {"fill": "#EFF5FC", "stroke": "#2E5C8A", "color": "#1F3A5A"}}, {"cls": "filter", "name": "필터", "meaning": "거르는 단계와 조건 게이트. 여기서 대상이 줄어든다.", "look": "청록", "pair": "diam", "style": {"fill": "#E8F6F5", "stroke": "#1E7F79", "color": "#145653"}}, {"cls": "file", "name": "파일", "meaning": "파일시스템.", "look": "노랑", "pair": "doc", "style": {"fill": "#FEF8E6", "stroke": "#B8941F", "color": "#6B5511"}}, {"cls": "table", "name": "테이블", "meaning": "RDB, 행을 보관하는 곳.", "look": "회색", "pair": "cyl", "style": {"fill": "#F4F5F6", "stroke": "#5A6672", "color": "#2E3A46"}}, {"cls": "canon", "name": "정본", "meaning": "같은 DB 지만 잃으면 복구가 어렵거나 비싼 것. 굵은 테두리.", "look": "회색 + 굵은 테두리", "pair": "cyl", "style": {"fill": "#F4F5F6", "stroke": "#5A6672", "width": 3.0, "color": "#2E3A46"}}, {"cls": "index", "name": "색인", "meaning": "같은 DB 안에서 검색을 받는 곳. 모양은 실린더, 색만 보라.", "look": "보라", "pair": "cyl", "style": {"fill": "#F2EFF9", "stroke": "#5B4B8A", "color": "#3E3260"}}, {"cls": "nondet", "name": "비결정", "meaning": "LLM 이 닿는 것, 외부 판정에 매달린 것. 결과가 매번 같지 않다.", "look": "주황", "pair": "rect", "style": {"fill": "#FDF0E3", "stroke": "#B4691A", "color": "#8A4B12"}}, {"cls": "tbd", "name": "미확정", "meaning": "그렸지만 설계가 아직 정하지 않은 자리. 붉은색은 이 뜻이 독점한다. 구현 여부를 뜻하지 않는다.", "look": "붉은 점선", "pair": "rect", "style": {"fill": "#FEF6F5", "stroke": "#C0392B", "dash": "4 3", "color": "#A03026"}}, {"cls": "ro", "name": "조회", "meaning": "쓰기가 하나도 없는 것.", "look": "초록", "pair": "rect", "style": {"fill": "#EFF7F0", "stroke": "#2F5A34", "color": "#1F3F23"}}, {"cls": "note", "name": "각주", "meaning": "상자가 아니다. 그림 안에 있어야 읽히는 부연.", "look": "", "pair": "rect", "style": {"text": "각주 글자", "color": "#5A6672"}}, {"cls": "warn", "name": "경고각주", "meaning": "그림이 말하는 것과 실제가 다른 지점.", "look": "붉은 글자", "pair": "rect", "style": {"text": "경고각주 글자", "color": "#A03026"}}], "lines": [{"key": "thick", "name": "굵은 실선", "syntax": "==>", "meaning": "축. 이것만 따라가면 전체가 읽힌다. 이 선만 따라가면 전체가 읽힌다."}, {"key": "thin", "name": "가는 실선", "syntax": "-->", "meaning": "부수 — 받아오는 것 · 남기는 것."}, {"key": "dot", "name": "점선", "syntax": "-.->", "meaning": "읽기만 하는 흐름 · 선택 · 비동기. 이 선을 따라 아무것도 바뀌지 않는다."}, {"key": "cross", "name": "끝이 X 인 선", "syntax": "--x", "meaning": "막힘 · 버림 · 종료."}, {"key": "both", "name": "양쪽 화살표", "syntax": "<-->", "meaning": "왕복 — 라벨에 오가는 것을 적는다."}, {"key": "label", "name": "선 위 글자", "syntax": "-->|\"x\"|", "meaning": "선 위 라벨. 짧게. 조건은 선이 아니라 마름모에."}], "boxes": [{"key": "영역", "tag": "영역", "name": "점선 묶음", "meaning": "논리 그룹. 같은 일을 하는 것끼리 묶었다는 뜻이다.", "style": {"fill": "#FCFCFB", "stroke": "#8A94A0", "dash": "4 3"}}, {"key": "배포", "tag": "배포", "name": "굵은 실선 묶음", "meaning": "배포 경계. 이 안의 것은 같이 올라가고 같이 내려간다.", "style": {"fill": "#F7FAFD", "stroke": "#5A6672", "width": 2.0}}, {"key": "앱", "tag": "앱", "name": "파란 점선 묶음", "meaning": "앱. 배포 경계 안에서 앱 하나에 속한 것을 묶는다.", "style": {"fill": "#EFF5FC", "stroke": "#2E5C8A", "dash": "4 3"}}], "callouts": ["<strong>바탕색이 같은 것이 3개다.<\/strong> 테두리로 가른다. 점선이면 외부, 실선이면 테이블, 굵은 실선이면 정본다.", "<strong>색이 같은 것이 2개다.<\/strong> 모양으로 가른다. 육각형이면 트리거, 문서이면 파일다."]}, "example": null};
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// 뜻 글에 tooltip 을 붙인다 (첫 등장만)
+function tipify(text) {
+  let out = esc(text);
+  for (const [w, tip] of Object.entries(DATA.terms)) {
+    const i = out.indexOf(w);
+    if (i < 0) continue;
+    out = out.slice(0, i) + `<span class="term" tabindex="0" data-tip="${esc(tip)}">${w}</span>` + out.slice(i + w.length);
+  }
+  return out;
+}
+const attrs = st => {
+  let a = `fill="${st.fill || '#FFFFFF'}" stroke="${st.stroke || '#5A6672'}" stroke-width="${st.width || 1.4}"`;
+  if (st.dash) a += ` stroke-dasharray="${st.dash}"`;
+  return a;
+};
+const PLAIN = { fill: '#FFFFFF', stroke: '#5A6672' };
+const SH = {
+  rect: a => `<rect x="15" y="12" width="120" height="40" rx="2" ${a}/>`,
+  cyl: a => `<path d="M25 16 v32 a50 8 0 0 0 100 0 v-32" ${a}/><ellipse cx="75" cy="16" rx="50" ry="8" ${a}/>`,
+  doc: a => `<path d="M20 8 H130 V46 C110 38 95 40 75 48 C55 56 38 56 20 48 Z" ${a}/>`,
+  hex: a => `<polygon points="35,12 115,12 132,32 115,52 35,52 18,32" ${a}/>`,
+  diam: a => `<polygon points="75,2 112,32 75,62 38,32" ${a}/>`,
+  sub: (a, st) => `<rect x="15" y="12" width="120" height="40" ${a}/><line x1="23" y1="12" x2="23" y2="52" stroke="${st.stroke || '#5A6672'}" stroke-width="1.2"/><line x1="127" y1="12" x2="127" y2="52" stroke="${st.stroke || '#5A6672'}" stroke-width="1.2"/>`,
+  stad: a => `<rect x="15" y="12" width="120" height="40" rx="20" ${a}/>`
+};
+const shapeSvg = (key, st) => (st.text !== undefined)
+  ? `<text x="75" y="38" text-anchor="middle" font-size="13" fill="${st.color}">${esc(st.text)}</text>`
+  : (SH[key] || SH.rect)(attrs(st), st);
+const L = (extra, mk = 'marker-end="url(#lg-ar)"') => `<line x1="10" y1="32" x2="138" y2="32" stroke="#8A94A0" ${extra} ${mk}/>`;
+const LN = {
+  thick: L('stroke-width="3.5"'),
+  thin: L('stroke-width="1.4"'),
+  dot: L('stroke-width="1.4" stroke-dasharray="3 3"'),
+  cross: L('stroke-width="1.4"', 'marker-end="url(#lg-xx)"'),
+  both: L('stroke-width="1.4"', 'marker-start="url(#lg-ar)" marker-end="url(#lg-ar)"') + `<text x="75" y="24" text-anchor="middle" font-size="11" fill="#5A6672">요청 · 응답</text>`,
+  label: L('stroke-width="1.4"') + `<rect x="58" y="23" width="34" height="18" fill="#FFFFFF"/><text x="75" y="36" text-anchor="middle" font-size="12" fill="#2E3A46">아니오</text>`
+};
+const boxSvg = (b) => `<rect x="8" y="6" width="134" height="52" rx="4" ${attrs({...b.style, width: b.style.width || 1.2})}/><text x="16" y="20" font-size="10" fill="#5A6672">${esc(b.tag)}</text><rect x="40" y="26" width="70" height="22" fill="#FFFFFF" stroke="#2E5C8A"/>`;
+const svg = (inner) => `<svg viewBox="0 0 150 64" aria-hidden="true">${inner}</svg>`;
+const card = (tile, name, tag, desc) => `<div class="card"><div class="tile">${tile}</div><div class="name"><h3>${esc(name)}</h3>${tag}</div><p class="desc">${desc}</p></div>`;
+
+const V = DATA.vocab;
+document.getElementById('lede').textContent = DATA.lede;
+document.getElementById('h-shapes').textContent = `모양 ${V.shapes.length}가지`;
+document.getElementById('h-colors').textContent = `색 ${V.classes.length}가지`;
+document.getElementById('h-lines').textContent = `선 ${V.lines.length}가지`;
+document.getElementById('h-boxes').textContent = `묶음 ${V.boxes.length}가지`;
+document.getElementById('shapes').innerHTML = V.shapes.map(s => card(svg(shapeSvg(s.key, PLAIN)), s.name, `<code>${esc(s.syntax)}</code>`, tipify(s.meaning))).join('');
+document.getElementById('colors').innerHTML = V.classes.map(c => card(svg(shapeSvg(c.pair, c.style)), c.name, `<span class="hint">${esc(c.look)}</span>`, tipify(c.meaning) + `<br><code>${esc(c.cls)}</code>`)).join('');
+document.getElementById('callouts').innerHTML = V.callouts.map(t => `<p class="callout">${t}</p>`).join('');
+document.getElementById('lines').innerHTML = V.lines.map(l => card(svg(LN[l.key]), l.name, `<code>${esc(l.syntax)}</code>`, tipify(l.meaning))).join('');
+document.getElementById('boxes').innerHTML = V.boxes.map(b => card(svg(boxSvg(b)), b.name, '', tipify(b.meaning))).join('');
+
+// 예시 탭
+const EX = DATA.example;
+if (EX) {
+  document.getElementById('tabs').hidden = false;
+  document.getElementById('tab-example').textContent = `${EX.name}에 쓰인 것`;
+  document.getElementById('figcap').textContent = `${EX.file} · 항목을 누르면 해당 부분만 진하게 보인다`;
+  const fig = document.querySelector('#fig svg');
+  // click 링크는 끊는다(이 페이지 밖의 상대 경로라 깨진다). <a> 자체는 위치(transform)를 들고 있어 남긴다.
+  if (fig) {
+    fig.style.backgroundColor = 'transparent';
+    fig.querySelectorAll('a').forEach(a => { a.removeAttribute('href'); a.removeAttributeNS('http://www.w3.org/1999/xlink', 'href'); a.style.cursor = 'default'; });
+  }
+  if (EX.question) document.getElementById('ex-question').textContent = `이 그림이 답하는 질문: ${EX.question}`;
+  if (EX.reading && EX.reading.length) {
+    document.getElementById('ex-steps').innerHTML = EX.reading.map(r => `<li>${tipify(r)}</li>`).join('');
+  } else if (!EX.question) {
+    document.getElementById('ex-read').hidden = true;
+  } else {
+    document.getElementById('ex-steps').hidden = true;
+  }
+  // 노드 id → svg 요소
+  const nodeEl = {};
+  if (fig) {
+    fig.querySelectorAll('g.node[id]').forEach(g => {
+      const m = g.id.match(/-flowchart-(.+)-\d+$/);
+      if (m) nodeEl[m[1]] = g;
+    });
+    // subgraph 테두리: id 는 그대로이거나 "<svg id>-" 가 앞에 붙는다
+    fig.querySelectorAll('g.cluster[id]').forEach(g => {
+      nodeEl[g.id] = g;
+      if (fig.id && g.id.startsWith(fig.id + '-')) nodeEl[g.id.slice(fig.id.length + 1)] = g;
+    });
+  }
+  const els = (r) => {
+    const out = [];
+    (r.nodes || []).forEach(n => { if (nodeEl[n]) out.push(nodeEl[n]); });
+    (r.edges || []).forEach(e => fig.querySelectorAll(`[data-id="${e}"]`).forEach(el => out.push(el.closest('.edgeLabel') || el)));
+    return out;
+  };
+  const kinds = [['shape', '모양'], ['class', '색'], ['line', '선'], ['box', '묶음']];
+  const rowsByKey = {};
+  for (const [k, word] of kinds) {
+    const rows = EX.rows[k] || [];
+    document.getElementById(`ex-g-${k}`).hidden = !rows.length;
+    if (!rows.length) continue;
+    document.getElementById(`ex-h-${k}`).textContent = `쓰인 ${word} ${rows.length}가지`;
+    document.getElementById(`ex-${k}`).innerHTML = rows.map((r, i) => {
+      rowsByKey[`${k}-${i}`] = r;
+      const tile = k === 'line' ? LN[r.key] : k === 'box' ? boxSvg(r) : shapeSvg(r.shape, r.style || PLAIN);
+      return `<button class="row" type="button" data-k="${k}-${i}" aria-pressed="false"><span class="tile">${svg(tile)}</span><span><b>${esc(r.name)}</b><span class="where">${tipify(r.where)}</span></span></button>`;
+    }).join('');
+  }
+  document.getElementById('ex-unused').innerHTML = EX.unused.map(u => `<span class="chip">${esc(u)}</span>`).join('');
+  document.getElementById('ex-g-unused').hidden = !EX.unused.length;
+  let pinned = null;
+  const show = (k) => {
+    if (!fig) return;
+    fig.querySelectorAll('.hl').forEach(e => e.classList.remove('hl'));
+    if (!k) { fig.classList.remove('focusing'); return; }
+    fig.classList.add('focusing');
+    els(rowsByKey[k]).forEach(e => e.classList.add('hl'));
+  };
+  document.querySelectorAll('.row').forEach(b => {
+    b.addEventListener('mouseenter', () => { if (!pinned) show(b.dataset.k); });
+    b.addEventListener('mouseleave', () => { if (!pinned) show(null); });
+    b.addEventListener('focus', () => { if (!pinned) show(b.dataset.k); });
+    b.addEventListener('blur', () => { if (!pinned) show(null); });
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.row.on').forEach(r => { r.classList.remove('on'); r.setAttribute('aria-pressed', 'false'); });
+      if (pinned === b.dataset.k) { pinned = null; show(null); return; }
+      pinned = b.dataset.k; b.classList.add('on'); b.setAttribute('aria-pressed', 'true'); show(pinned);
+    });
+  });
+  const route = () => {
+    const v = location.hash === '#example' ? 'example' : 'all';
+    document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.view === v)));
+    document.getElementById('all').hidden = v !== 'all';
+    document.getElementById('example').hidden = v !== 'example';
+  };
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { location.hash = t.dataset.view; route(); }));
+  window.addEventListener('hashchange', route);
+  route();
+}
+</script>
+</body>
+</html>

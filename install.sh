@@ -34,3 +34,11 @@ done
 
 echo
 echo "설치 위치: $target"
+
+# 스킬이 .install-hint 를 두면 처음 쓰는 사람이 알아 두면 좋은 기능을 한 줄씩 보여 준다.
+hints="$(find "$root/skills" -name .install-hint -print0 | xargs -0 -I{} sh -c 'printf "  · %s: %s\n" "$(basename "$(dirname "{}")")" "$(head -n 1 "{}")"')"
+if [ -n "$hints" ]; then
+  echo
+  echo "알아 두면 좋은 기능:"
+  printf '%s\n' "$hints"
+fi
