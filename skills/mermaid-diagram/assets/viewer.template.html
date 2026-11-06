@@ -207,7 +207,9 @@ if (matchMedia('(max-width: 720px)').matches) $('vlist').open = false;
 
 // 목록 나무
 const kids = {};
-D.forEach(d => { (kids[d.parent || ''] ||= []).push(d); });
+// 위 그림 사슬이 맨 위에 닿지 않으면(고리 · 없는 키) 그 그림은 맨 위 줄에 둔다. 목록에서 빠지지 않게.
+const reachesTop = d => { const w = new Set(); for (let k = d.parent; k; k = byKey[k] && byKey[k].parent) { if (!byKey[k] || w.has(k)) return false; w.add(k); } return true; };
+D.forEach(d => { (kids[(d.parent && reachesTop(d)) ? d.parent : ''] ||= []).push(d); });
 const treeHTML = (pk) => (kids[pk] || []).map(d =>
   `<li><button class="ti" type="button" data-key="${d.key}">${esc(d.title)}</button>${kids[d.key] ? `<ul>${treeHTML(d.key)}</ul>` : ''}</li>`).join('');
 $('tree').innerHTML = treeHTML('');
@@ -244,7 +246,9 @@ function draw() {
   const d = cur;
   document.querySelectorAll('.ti').forEach(b => b.setAttribute('aria-current', String(b.dataset.key === d.key)));
   // 지나온 길
-  const chain = []; for (let k = d.key; k; k = byKey[k].parent) chain.unshift(byKey[k]);
+  // 위 그림 사슬. 데이터에 고리가 있어도 멈추지 않게 지나온 그림을 기억한다.
+  const chain = [], walked = new Set();
+  for (let k = d.key; k && byKey[k] && !walked.has(k); k = byKey[k].parent) { walked.add(k); chain.unshift(byKey[k]); }
   $('crumbs').innerHTML = chain.map((c, i) => i < chain.length - 1 ? `<button type="button" data-key="${c.key}">${esc(c.title)}</button><span>›</span>` : `<span>${esc(c.title)}</span>`).join('');
   $('crumbs').querySelectorAll('button').forEach(b => b.onclick = () => go(b.dataset.key));
   $('d-title').innerHTML = markTerms(d.title, d.terms);

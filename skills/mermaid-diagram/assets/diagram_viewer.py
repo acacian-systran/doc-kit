@@ -203,9 +203,22 @@ def link(diagrams):
     outs = {d["key"]: [t for ts in d["drill"].values() for t in ts if not keyed[t].get("step_parent")] for d in diagrams}
     seen = {k for k, v in parent.items() if v}
     expanded = set()
-    # 요약 그림(펼침 부모가 없는 것)부터, 이미 자리가 있는 펼침 그림도 그 click 을 따라간다
+    # 요약 그림(펼침 부모가 없는 것)부터, 이미 자리가 있는 펼침 그림도 그 click 을 따라간다.
+    # 펼침 그림은 요약 그림보다 늘 뒤다: 요약 그림이 되돌아가는 링크(예: 하위 → 맨 위)로 target 이 되어도
+    # 펼침 그림이 먼저 출발점이 되면 요약 그림을 자기 아래로 잡아 부모 고리가 생긴다.
     targets = {t for ts in outs.values() for t in ts}
-    order = sorted(diagrams, key=lambda d: (d["key"] in targets, bool(parent[d["key"]]), -len(outs[d["key"]]), d["stem"]))
+    order = sorted(diagrams, key=lambda d: (bool(parent[d["key"]]), d["key"] in targets, -len(outs[d["key"]]), d["stem"]))
+
+    def is_ancestor(a, k):
+        """a 가 k 자신이거나 k 의 위 그림 사슬에 있으면 True."""
+        walked = set()
+        while k and k not in walked:
+            if k == a:
+                return True
+            walked.add(k)
+            k = parent[k]
+        return False
+
     for root in order:
         if root["key"] in expanded:
             continue
@@ -217,7 +230,7 @@ def link(diagrams):
                 continue
             expanded.add(k)
             for t in outs[k]:
-                if t not in seen:
+                if t not in seen and not is_ancestor(t, k):
                     seen.add(t)
                     parent[t] = k
                     queue.append(t)
