@@ -38,6 +38,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .ti { display: block; width: 100%; text-align: left; font: inherit; color: var(--fg); background: none; border: 0; border-radius: 6px; padding: 5px 8px; cursor: pointer; line-height: 1.4; }
 .ti:hover { background: var(--accent-soft); }
 .ti[aria-current="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.elist-h { font-weight: 700; padding: 4px 6px; margin: 14px 0 2px; border-top: 1px solid var(--line); padding-top: 12px; }
+.elist-h span { font-weight: 400; color: var(--muted); }
+.ti small { color: var(--muted); margin-left: 4px; }
+.lintbadge { font-size: 0.8rem; color: #A03026; border: 1px solid #E8B4AE; background: #FEF6F5; border-radius: 999px; padding: 2px 10px; cursor: help; }
 .vstage { min-width: 0; padding: 14px 18px; display: grid; grid-template-rows: auto auto 1fr; gap: 8px; }
 .crumbs { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font-size: 0.85rem; color: var(--muted); }
 .crumbs button { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; }
@@ -66,6 +70,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .links { display: grid; gap: 6px; }
 .links .btn { text-align: left; }
 .links .btn small { display: block; color: var(--muted); }
+.links .btn[disabled] { opacity: 1; cursor: default; border-style: dashed; }
 .empty { color: var(--muted); font-size: 0.9rem; }
 #vocab { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; max-width: 1080px; margin: 0 auto; }
 .vpanel .row { grid-template-columns: 72px minmax(0, 1fr); }
@@ -98,6 +103,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     <input id="q" type="search" placeholder="그림 · 질문 · 상자 라벨 찾기" aria-label="그림과 상자 찾기" autocomplete="off">
     <div class="results" id="results" hidden></div>
   </div>
+  <span class="lintbadge" id="lintbadge" tabindex="0" hidden></span>
   <button class="btn" id="vocab-btn" type="button" aria-pressed="false">기호 전체</button>
 </header>
 
@@ -105,6 +111,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <details class="vlist" id="vlist" open>
     <summary id="vlist-sum"></summary>
     <ul class="tree" id="tree"></ul>
+    <div id="elist" hidden>
+      <p class="elist-h">공유 요소 <span id="elist-n"></span></p>
+      <ul class="tree" id="etree"></ul>
+    </div>
   </details>
   <section class="vstage">
     <nav class="crumbs" id="crumbs" aria-label="지나온 그림"></nav>
@@ -150,6 +160,17 @@ const treeHTML = (pk) => (kids[pk] || []).map(d =>
   `<li><button class="ti" type="button" data-key="${d.key}">${esc(d.title)}</button>${kids[d.key] ? `<ul>${treeHTML(d.key)}</ul>` : ''}</li>`).join('');
 $('tree').innerHTML = treeHTML('');
 $('tree').addEventListener('click', e => { const b = e.target.closest('.ti'); if (b) go(b.dataset.key); });
+const EL = DATA.elements || {};
+const elIds = Object.keys(EL).filter(id => EL[id].uses.length);
+if (elIds.length) {
+  $('elist').hidden = false; $('elist-n').textContent = `(${elIds.length})`;
+  $('etree').innerHTML = elIds.map(id => `<li><button class="ti" type="button" data-el="${id}">${esc(EL[id].name)}<small>${EL[id].uses.length}장</small></button></li>`).join('');
+  $('etree').addEventListener('click', e => { const b = e.target.closest('.ti'); if (b) { const k = (cur && EL[b.dataset.el].uses.includes(cur.key)) ? cur.key : EL[b.dataset.el].uses[0]; go(k, b.dataset.el); } });
+}
+if ((DATA.lint || []).length) {
+  $('lintbadge').hidden = false; $('lintbadge').textContent = `요소 검사 ${DATA.lint.length}건`;
+  $('lintbadge').title = DATA.lint.join('\n');
+}
 
 // 같은 라벨 색인 (공백 · 대소문자 무시)
 const norm = s => s.toLowerCase().replace(/\s+/g, ' ').trim();
@@ -236,6 +257,7 @@ function select(id) {
   fig && fig.querySelectorAll('.sel').forEach(e => e.classList.remove('sel'));
   sel = id;
   if (id && nodeEl[id]) nodeEl[id].classList.add('sel');
+  document.querySelectorAll('#etree .ti').forEach(b => b.setAttribute('aria-current', String(b.dataset.el === id)));
   setPanel('info');
   const d = cur, info = $('p-info');
   if (!id || !d.nodes[id]) {
@@ -250,13 +272,18 @@ function select(id) {
   } else {
     const n = d.nodes[id];
     const drills = d.drill[id] || [];
-    const same = (labelIndex[norm(n.label)] || []).filter(([k, nid]) => !(k === d.key && nid === id));
+    const shared = EL[id];
+    const same = shared ? [] : (labelIndex[norm(n.label)] || []).filter(([k, nid]) => !(k === d.key && nid === id));
     info.innerHTML = `
       <h3>${esc(n.label)}</h3>
       <div class="kv"><b>모양</b><span>${esc(n.shape)}</span><span class="m">${tipify(n.shapeMeaning)}</span></div>
       ${n.cls ? `<div class="kv"><b>색</b><span>${esc(n.cls)}${n.clsLook ? ' · ' + esc(n.clsLook) : ''}</span><span class="m">${tipify(n.clsMeaning)}</span></div>` : ''}
       ${drills.length ? `<div class="kv"><b>들어가기</b><div class="links">${drills.map(t => `<button class="btn" data-go="${t}">${esc(byKey[t].title)}<small>${esc(byKey[t].question || '')}</small></button>`).join('')}</div></div>` : ''}
       ${d.outside[id] ? `<div class="kv"><b>연결된 문서 (그림 없음)</b><span class="m"><code>${esc(d.outside[id])}</code></span></div>` : ''}
+      ${shared ? `<div class="kv"><b>공유 요소 · ${esc(shared.name)}</b>${shared.desc ? `<span class="m">${tipify(shared.desc)}</span>` : ''}</div>
+        <div class="kv"><b>이 요소가 나오는 그림 (${shared.uses.length})</b><div class="links">${shared.uses.map(k => k === d.key
+          ? `<button class="btn" disabled aria-current="true">${esc(byKey[k].title)}<small>지금 보는 그림</small></button>`
+          : `<button class="btn" data-go="${k}" data-node="${id}">${esc(byKey[k].title)}<small>라벨: ${esc(byKey[k].nodes[id].label)}</small></button>`).join('')}</div></div>` : ''}
       ${same.length ? `<div class="kv"><b>같은 라벨이 나오는 다른 그림</b><div class="links">${same.map(([k, nid]) => `<button class="btn" data-go="${k}" data-node="${nid}">${esc(byKey[k].title)}</button>`).join('')}</div></div>` : ''}
       <div class="kv"><b>id</b><span class="m"><code>${esc(id)}</code></span></div>`;
   }
@@ -309,6 +336,7 @@ $('q').addEventListener('input', () => {
   if (!q) { res.hidden = true; return; }
   const hits = [];
   D.forEach(d => { if (norm(d.title + ' ' + d.question).includes(q)) hits.push({ k: d.key, t: d.title, s: '그림' }); });
+  elIds.forEach(id => { if (norm(EL[id].name + ' ' + id + ' ' + EL[id].desc).includes(q)) hits.push({ k: EL[id].uses[0], n: id, t: EL[id].name, s: `공유 요소 · ${EL[id].uses.length}장` }); });
   D.forEach(d => Object.entries(d.nodes).forEach(([id, n]) => { if (norm(n.label).includes(q)) hits.push({ k: d.key, n: id, t: n.label, s: d.title }); }));
   res.innerHTML = hits.slice(0, 40).map(h => `<button type="button" data-go="${h.k}" ${h.n ? `data-node="${h.n}"` : ''}>${esc(h.t)}<small>${esc(h.s)}</small></button>`).join('') || '<p class="empty" style="padding:8px 10px">찾은 것이 없다.</p>';
   res.hidden = false;

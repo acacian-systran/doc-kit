@@ -29,6 +29,7 @@ description: Draw architecture, pipeline, sequence, state, ER and schedule diagr
 | `assets/legend.html` | 그림 기호 읽는 법 — 기호 전체. 미리 만들어 둔 것. 처음 보는 사람에게 그대로 준다 |
 | `assets/legend_page.py` | 읽는 법 페이지 생성기. 뜻은 grammar.md · 팔레트에서 읽는다. `--example` 로 예시 그림 탭을 더한다 |
 | `assets/legend.template.html` | 위 페이지의 틀 |
+| `assets/elements_lint.py` | 공유 요소(`_elements.md`)가 그림마다 같은 색 · 모양인지 검사, 등록 후보 찾기 |
 | `assets/diagram_viewer.py` | 그림 디렉터리 하나를 둘러보는 뷰어(HTML 한 장) 생성기 |
 | `assets/viewer.template.html` | 뷰어의 틀 |
 | `assets/legend.shared.css` · `legend.shared.js` | 읽는 법 페이지와 뷰어가 함께 쓰는 스타일 · 그리기 도구. 두 생성기가 인라인한다 |
@@ -57,6 +58,7 @@ README 표에 그대로 들어간다.
 ```
 docs/diagrams/
   _palette.mmd       # assets/_palette.mmd 복사
+  _elements.md       # 둘 이상의 그림에 나오는 요소의 id 목록 (grammar.md "공유 요소")
   README.md          # references/diagrams-readme.md 를 보고 작성
   <관점>/
     <이름>.mmd
@@ -73,6 +75,7 @@ docs/diagrams/
 
 - 축은 `==>`, 부수 흐름은 `-->`, 읽기·비동기는 `-.->`. 굵은 선만 따라가면 전체가 읽히게.
 - 조건은 마름모(`{ }`)에 `filter` 색. 라벨의 괄호로 묶지 않는다.
+- 이미 다른 그림에 나온 요소는 `_elements.md` 의 id 로 쓴다. 새로 둘 이상의 그림에 나오게 되면 목록에 더한다. 그린 뒤 `elements_lint.py <디렉터리>` 를 돌린다.
 - 실린더는 DB, 문서 모양은 파일, 육각형은 실행을 부르는 것. 모양 문법은 grammar.md 어휘 표.
 - 설계가 아직 정하지 않은 자리는 `tbd`(붉은 점선). **구현 여부는 그리지 않는다** — 진척은
   README 의 "그린 시점" 절에 적는다.
@@ -190,9 +193,10 @@ python3 <스킬 경로>/assets/diagram_viewer.py <그림 디렉터리> -o <그�
   번호(①–⑳)가 라벨 맨 앞에 있어야 잡힌다.
 - 파일 이름이 `d-X-stepK` 이고 주석이 없으면 목록에서 d-X 아래에 달기만 한다.
 
-**"같은 라벨이 나오는 다른 그림"은 라벨 글자가 같을 때만 잡는다.** 그림마다 id 가 달라
-같은 요소인지 알 수 없기 때문이다. flowchart 가 아닌 그림은 보기만 되고 요소 정보와
-범례가 없다.
+**같은 요소를 잇는 것은 `_elements.md` 다.** 목록에 있는 id 의 상자를 누르면 "이 요소가
+나오는 그림"이 모두 나오고, 목록 아래에 공유 요소 목록이 붙는다. 검사 오류가 있으면 위
+막대에 "요소 검사 N건"이 뜬다. 목록에 없는 상자는 라벨 글자가 같을 때만 다른 그림과
+이어진다. flowchart 가 아닌 그림은 보기만 되고 요소 정보와 범례가 없다.
 
 `.mmd` 를 고치면 다시 렌더하고 뷰어도 다시 만든다. 만든 뷰어는 그림 디렉터리 README 에
 링크한다. 읽는 법 페이지(7절)를 제안하는 때에, 그림이 세 장 이상이면 뷰어도 함께 제안한다.

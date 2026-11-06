@@ -16,6 +16,10 @@
 - `click <id> href "<경로>"` — 경로의 파일 이름이 다른 그림과 같으면(`X` 또는 `d-X`) 그 그림으로 들어간다.
 - `%% 요약 그림 d-X 의 ② 상자를 펼친 것` — d-X 의 ② 로 시작하는 상자에서 이 그림으로 들어간다.
 - 파일 이름 `d-X-stepK` — 주석이 없으면 d-X 아래에 단다.
+
+디렉터리에 `_elements.md`(공유 요소 목록, elements_lint.py 참고)가 있으면 그 id 의 요소는
+"이 요소가 나오는 그림"을 모두 보여 주고, 목록 아래에 공유 요소 목록이 붙는다. 없으면 라벨
+글자가 같은 요소만 이어 준다.
 """
 import argparse
 import json
@@ -26,6 +30,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import legend_page as lp  # noqa: E402
+import elements_lint as el  # noqa: E402
 
 MARKS = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"
 
@@ -153,20 +158,35 @@ def main():
         sys.exit(f"{a.dir}: 렌더된 그림(.mmd + .svg)이 없다")
     link(diagrams)
 
+    # 공유 요소 (_elements.md): 요소마다 나오는 그림, 그리고 검사 결과
+    reg, reg_problems = el.parse_registry(a.dir / "_elements.md")
+    elements = {}
+    for eid, e in reg.items():
+        uses = [d["key"] for d in diagrams if eid in d["nodes"]]
+        elements[eid] = {**e, "uses": uses}
+    lint_msgs = []
+    if reg:
+        classes, _ = lp.read_palette(palette)
+        errors, warns, _ = el.lint(a.dir, reg, el.collect(a.dir), classes)
+        lint_msgs = reg_problems + errors + warns
+        for m in reg_problems + errors:
+            print(f"✗ {m}", file=sys.stderr)
+
     # 제목: "그림" · "wiki" · "docs" 같은 이름은 건너뛰고 위로 올라간다
     generic = {"그림", "wiki", "docs", "doc", "diagrams", "diagram", "figures", "위키"}
     p = a.dir.resolve()
     while p.name.lower() in generic and p.parent != p:
         p = p.parent
     title = a.title or p.name
-    data = {"title": title, "terms": lp.TERMS, "vocab": vocab, "diagrams": diagrams}
+    data = {"title": title, "terms": lp.TERMS, "vocab": vocab, "diagrams": diagrams,
+            "elements": elements, "lint": lint_msgs}
     tpl = lp.inline_shared((HERE / "viewer.template.html").read_text(encoding="utf-8"))
     js = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     out = tpl.replace("/*DATA*/", js, 1).replace("{{TITLE}}", title.replace("<", ""), 1)
     Path(a.out).write_text(out, encoding="utf-8")
     roots = sum(1 for d in diagrams if not d["parent"])
     drills = sum(len(d["drill"]) for d in diagrams)
-    print(f"→ {a.out}  (그림 {len(diagrams)}장 · 맨 위 {roots}장 · 들어가는 상자 {drills}개)")
+    print(f"→ {a.out}  (그림 {len(diagrams)}장 · 맨 위 {roots}장 · 들어가는 상자 {drills}개 · 공유 요소 {len(elements)}개)")
 
 
 if __name__ == "__main__":

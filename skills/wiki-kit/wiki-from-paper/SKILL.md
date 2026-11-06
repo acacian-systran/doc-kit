@@ -71,6 +71,8 @@ python3 $PDFTEXT paper.pdf            # paper.txt
 - `figure: y`는 `figures`가 `none`이 아닐 때, 단계가 있는 기법과 값이 든 예로 보여 줄 수 있는 결과에만(보통 3–8개). 기법은 다이어그램 + 예시 그림, 결과는 예시 그림만.
 - 표제어가 원문에 있는지 `grep -i`로 확인.
 
+**`<위키>/그림/_elements.md`** (`figures`가 `all` · `diagram`일 때) — 둘 이상의 다이어그램에 나올 요소(입력 schema · 문서 · 저장소, 기법끼리 부르는 단계)의 id · 이름 · 모양 · 색 · 설명. 그림 agent들이 동시에 그리므로 미리 정해 둬야 id가 맞는다. 형식은 mermaid-diagram grammar.md "공유 요소".
+
 **`<위키>/용어.md`** — `| 용어(영어) | 번역어 | 한 줄 뜻 | 쪽 | 메모 |`. plan의 모든 title + 노드 본문에 반복해 나올 용어. 노드끼리 같은 말을 쓰게 하는 표다.
 
 그다음 **사용자에게 보여 주고 멈춘다**: 종류별 개수, plan 표, 그림 대상, 예상 agent 수(노드 × 2 + 그림 노드 + 1). 고치라는 것을 반영하고 승인을 받는다.
@@ -102,6 +104,7 @@ Workflow({ scriptPath: "<SKILL_DIR>/assets/paper-wiki.workflow.js", args: {
    ```bash
    cd <위키> && python3 $SKILL_DIR/scripts/check_quotes.py .
    python3 $WIKI_KIT/wiki-lint/scripts/wiki_lint.py <위키>
+   python3 $MERMAID/assets/elements_lint.py <위키>/그림   # 다이어그램을 그렸을 때. ✗ 는 고친다
    ```
 2. 노드 2–3개를 골라 직접 읽고 원문과 대조한다(특히 Verify가 `unresolved`를 남긴 것, 결과 노드 하나).
 3. 커밋은 config `commit`. `auto`면 wiki-add 6단계 규칙(이번에 만든 파일만 경로로 add, staged 목록 확인). push 안 함.

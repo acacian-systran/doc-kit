@@ -33,12 +33,14 @@ plan에서 `figure: y`인 노드만 그린다. 결과 노드는 흐름이 없으
 - **LLM이 닿는 단계는 `nondet`(주황).** 저장소는 모양으로: DB · 집합은 실린더, 문서 · 파일은 `doc`, 남의 것(외부 온톨로지 등)은 `ext`.
 - **논문 안에서 어긋나는 곳**은 `warn` 각주 노드(⚠ + 쪽)로 해당 상자 옆에 점선(`-.-`)으로 붙인다.
 - 문구 규칙은 ③과 같다(용어표 용어 · 기호 · 한 줄에 사실 하나). 라벨이 길면 `<br/>`. `<>` · `|` 금지.
+- **공유 요소:** 여러 그림에 나오는 것(schema · 문서 · 다른 기법 단계 등)은 `그림/_elements.md` 의 id 로 쓴다. 목록에 없는데 다른 그림에도 나올 것이면 쓰지 말고 노트(`note`)에 남긴다 — 목록은 메인 세션이 고친다.
 - 머리 `%%` 주석: `답하는 질문:` 한 줄, `근거:` paper.txt 쪽 목록, ②면 `요약 그림 d-<이름> 의 K 상자를 펼친 것`.
 
 ### 다이어그램 파일
 
 `<위키 루트>/그림/`:
 
+- `_elements.md` — 공유 요소 id 목록(mermaid-diagram grammar.md "공유 요소"). 메인 세션이 plan 때 만든다
 - `_palette.mmd` — mermaid-diagram `assets/_palette.mmd` 복사(위키를 만들 때). 각 `.mmd` 끝에 `%% palette:begin` ~ `%% palette:end` 블록을 붙인다
 - `d-<이름>.mmd` · `d-<이름>-stepK.mmd` — 소스. 렌더: `<mermaid-diagram>/assets/render.sh d-<이름>.mmd` (svg) · `render.sh d-<이름>.mmd d-<이름>.png` (png)
 - `d-<이름>-labels.md` — 문구 표 `| 자리 | 위치 | 문구 |` + `## 원문 확인` 표 `| p.N | 원문 그대로 |`. `check_quotes.py`가 검사한다. 원문 셀에 `|` 가 들어가면 그 앞까지만 인용한다
