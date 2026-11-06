@@ -29,8 +29,26 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .results small { display: block; color: var(--muted); }
 .btn { font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
 .btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
-.vmain { display: grid; grid-template-columns: 250px minmax(0, 1fr) 330px; gap: 0; min-height: calc(100vh - 56px); }
-.vlist { border-right: 1px solid var(--line); padding: 12px 10px; overflow: auto; max-height: calc(100vh - 56px); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 56px); }
+.vmain { --lw: 250px; --rw: 330px; display: grid; grid-template-columns: var(--lw) 7px minmax(0, 1fr) 7px var(--rw); gap: 0; min-height: calc(100vh - 56px); }
+/* 칸 경계: 끌면 폭이 바뀌고, 두 번 누르면 그 칸을 접거나 편다. */
+.gut { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 56px); height: calc(100vh - 56px); cursor: col-resize; touch-action: none; display: grid; place-items: center; }
+.gut::before { content: ""; width: 1px; height: 100%; background: var(--line); }
+.gut::after { content: ""; position: absolute; width: 3px; height: 36px; border-radius: 2px; background: var(--line); }
+.gut:hover::before, .gut.on::before, .gut:focus-visible::before { width: 3px; background: var(--accent); }
+.gut:focus-visible { outline: none; }
+body.no-left .vlist, body.no-right .vpanel { display: none; }
+.vlist { grid-column: 1; } #gut-l { grid-column: 2; } .vstage { grid-column: 3; } #gut-r { grid-column: 4; } .vpanel { grid-column: 5; }
+body.no-top .vbar, body.no-top .crumbs, body.no-top .stage-head { display: none; }
+body.no-top .vlist, body.no-top .vpanel, body.no-top .gut { top: env(safe-area-inset-top, 0px); max-height: 100vh; }
+body.no-top .gut { height: 100vh; }
+body.no-top .vmain { min-height: 100vh; }
+body.no-top .vstage { grid-template-rows: 1fr; padding-block: 10px; }
+body.no-top .canvas { height: calc(100vh - 20px); }
+body.resizing, body.resizing * { cursor: col-resize !important; user-select: none; }
+.panes { position: absolute; left: 10px; top: 10px; display: flex; gap: 4px; z-index: 2; }
+.panes .btn { background: #FFFFFF; color: #1F2A35; border-color: #D9DEE3; padding: 3px 9px; font-size: 0.82rem; }
+.panes .btn[aria-pressed="true"] { background: #E3ECF6; border-color: #2E5C8A; }
+.vlist { min-width: 0; padding: 12px 10px; overflow: auto; max-height: calc(100vh - 56px); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 56px); }
 .vlist summary { font-weight: 700; cursor: pointer; padding: 4px 6px; list-style: none; }
 .vlist summary::-webkit-details-marker { display: none; }
 .tree, .tree ul { list-style: none; margin: 0; padding: 0; }
@@ -61,7 +79,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .canvas .node.sel .label-container, .canvas .node.sel path, .canvas .node.sel polygon, .canvas .node.sel rect { filter: drop-shadow(0 0 3px #2E5C8A) drop-shadow(0 0 1px #2E5C8A); }
 .badge circle { fill: #2E5C8A; }
 .badge text { fill: #FFFFFF; font-size: 11px; font-weight: 700; }
-.vpanel { border-left: 1px solid var(--line); padding: 12px 14px; overflow: auto; max-height: calc(100vh - 56px); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 56px); display: grid; gap: 12px; align-content: start; }
+.vpanel { min-width: 0; padding: 12px 14px; overflow: auto; max-height: calc(100vh - 56px); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 56px); display: grid; gap: 12px; align-content: start; }
 .ptabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
 .ptabs .tab { padding: 8px 10px; }
 .info { display: grid; gap: 10px; }
@@ -79,12 +97,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .vpanel .row { grid-template-columns: 72px minmax(0, 1fr); }
 .vpanel .row .tile svg { width: 68px; }
 @media (max-width: 1100px) {
-  .vmain { grid-template-columns: 220px minmax(0, 1fr); }
-  .vpanel { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); position: static; max-height: none; }
+  .vmain { grid-template-columns: var(--lw) 7px minmax(0, 1fr); }
+  #gut-r { display: none; }
+  .vpanel { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid var(--line); position: static; max-height: none; }
 }
 @media (max-width: 720px) {
   .vmain { grid-template-columns: minmax(0, 1fr); }
-  .vlist { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
+  .gut { display: none; }
+  .vlist, .vstage, .vpanel { grid-column: 1; grid-row: auto; }
+  .vlist { position: static; max-height: none; border-bottom: 1px solid var(--line); }
   .vstage { padding: 12px 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .canvas { height: 60vh; min-height: 300px; }
   .vpanel { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
@@ -119,19 +140,27 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <ul class="tree" id="etree"></ul>
     </div>
   </details>
+  <div class="gut" id="gut-l" data-side="l" role="separator" aria-orientation="vertical" aria-label="그림 목록 폭" tabindex="0" title="끌기: 폭 바꾸기 · 두 번 누르기: 접기/펴기"></div>
   <section class="vstage">
     <nav class="crumbs" id="crumbs" aria-label="지나온 그림"></nav>
     <div class="stage-head"><h2 id="d-title"></h2><p id="d-question"></p></div>
     <div class="canvas" id="canvas">
+      <div class="panes" role="group" aria-label="칸 보이기">
+        <button class="btn" type="button" id="pane-l" aria-pressed="true" title="그림 목록 칸 ( [ )">목록</button>
+        <button class="btn" type="button" id="pane-t" aria-pressed="true" title="위 막대와 그림 제목 ( \ )">위</button>
+        <button class="btn" type="button" id="pane-r" aria-pressed="true" title="요소 · 범례 칸 ( ] )">정보</button>
+        <button class="btn" type="button" id="pane-all" aria-pressed="false" title="세 칸을 한 번에 접거나 편다 ( f )">넓게</button>
+      </div>
       <div class="zoom">
         <button class="btn" type="button" id="z-in" aria-label="확대">+</button>
         <button class="btn" type="button" id="z-out" aria-label="축소">−</button>
         <button class="btn" type="button" id="z-fit">맞춤</button>
         <button class="btn" type="button" id="io-btn" aria-pressed="true" title="선 위의 입출력 라벨을 보이거나 숨긴다. 갈래 라벨(예 · 아니오)은 늘 보인다">입출력</button>
       </div>
-      <div class="canvas-hint">휠: 확대 · 끌기: 이동 · 상자 누르기: 정보 · <b>+</b> 표시 상자 두 번 누르기: 들어가기</div>
+      <div class="canvas-hint">휠: 확대 · 끌기: 이동 · 상자 누르기: 정보 · <b>+</b> 표시 상자 두 번 누르기: 들어가기 · 칸 경계 끌기: 폭</div>
     </div>
   </section>
+  <div class="gut" id="gut-r" data-side="r" role="separator" aria-orientation="vertical" aria-label="정보 칸 폭" tabindex="0" title="끌기: 폭 바꾸기 · 두 번 누르기: 접기/펴기"></div>
   <aside class="vpanel">
     <nav class="ptabs" role="tablist">
       <button class="tab" role="tab" data-p="info" aria-selected="true">요소</button>
@@ -263,7 +292,7 @@ window.addEventListener('pointermove', e => {
   view.x = drag.v.x - dx * drag.s; view.y = drag.v.y - dy * drag.s; applyView();
 });
 window.addEventListener('pointerup', () => { drag = null; $('canvas').classList.remove('dragging'); setTimeout(() => moved = false, 0); });
-$('canvas').addEventListener('click', e => { if (!moved && !e.target.closest('.node, .zoom')) select(null); });
+$('canvas').addEventListener('click', e => { if (!moved && !e.target.closest('.node, .zoom, .panes')) select(null); });
 
 // 요소 정보
 function select(id) {
@@ -343,6 +372,53 @@ function showVocab(on) {
   if (on && location.hash !== '#vocab') history.replaceState(null, '', '#vocab');
 }
 $('vocab-btn').onclick = () => { const on = $('vocab').hidden; showVocab(on); if (!on) go(cur ? cur.key : D[0].key); };
+
+// 칸 접기 · 폭 (보는 사람 브라우저에만 저장)
+const LAY = { l: true, r: true, t: true, lw: 250, rw: 330 };
+try { Object.assign(LAY, JSON.parse(localStorage.getItem('viewer-layout') || '{}')); } catch (e) {}
+const saveLay = () => { try { localStorage.setItem('viewer-layout', JSON.stringify(LAY)); } catch (e) {} };
+function applyLay() {
+  document.body.classList.toggle('no-left', !LAY.l);
+  document.body.classList.toggle('no-right', !LAY.r);
+  document.body.classList.toggle('no-top', !LAY.t);
+  $('vmain').style.setProperty('--lw', (LAY.l ? LAY.lw : 0) + 'px'); $('vmain').style.setProperty('--rw', (LAY.r ? LAY.rw : 0) + 'px');
+  $('pane-l').setAttribute('aria-pressed', String(LAY.l)); $('pane-r').setAttribute('aria-pressed', String(LAY.r)); $('pane-t').setAttribute('aria-pressed', String(LAY.t));
+  $('pane-all').setAttribute('aria-pressed', String(!LAY.l && !LAY.r && !LAY.t));
+  saveLay();
+}
+const togglePane = k => { LAY[k] = !LAY[k]; applyLay(); };
+const toggleAll = () => { const any = LAY.l || LAY.r || LAY.t; LAY.l = LAY.r = LAY.t = !any; applyLay(); };
+$('pane-l').onclick = () => togglePane('l'); $('pane-r').onclick = () => togglePane('r'); $('pane-t').onclick = () => togglePane('t'); $('pane-all').onclick = toggleAll;
+['pane-l', 'pane-r', 'pane-t', 'pane-all'].forEach(id => $(id).addEventListener('pointerdown', e => e.stopPropagation()));
+const clampW = (side, w) => Math.round(Math.min(Math.max(side === 'l' ? 160 : 220, w), Math.max(320, innerWidth * 0.45)));
+document.querySelectorAll('.gut').forEach(g => {
+  const side = g.dataset.side, wk = side + 'w';
+  let st = null;
+  g.addEventListener('pointerdown', e => {
+    if (!LAY[side]) return;
+    e.preventDefault(); g.setPointerCapture(e.pointerId);
+    st = { x: e.clientX, w: LAY[wk] }; g.classList.add('on'); document.body.classList.add('resizing');
+  });
+  g.addEventListener('pointermove', e => {
+    if (!st) return;
+    const dx = e.clientX - st.x;
+    LAY[wk] = clampW(side, st.w + (side === 'l' ? dx : -dx));
+    $('vmain').style.setProperty('--' + wk, LAY[wk] + 'px');
+  });
+  const end = () => { if (!st) return; st = null; g.classList.remove('on'); document.body.classList.remove('resizing'); saveLay(); };
+  g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+  g.addEventListener('dblclick', () => togglePane(side));
+  g.addEventListener('keydown', e => {
+    const step = e.shiftKey ? 60 : 20, grow = side === 'l' ? 'ArrowRight' : 'ArrowLeft', shrink = side === 'l' ? 'ArrowLeft' : 'ArrowRight';
+    if (e.key === grow || e.key === shrink) { e.preventDefault(); if (!LAY[side]) { togglePane(side); return; } LAY[wk] = clampW(side, LAY[wk] + (e.key === grow ? step : -step)); applyLay(); }
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePane(side); }
+  });
+});
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest('input, textarea, [contenteditable]')) return;
+  if (e.key === '[') togglePane('l'); else if (e.key === ']') togglePane('r'); else if (e.key === '\\') togglePane('t'); else if (e.key === 'f') toggleAll();
+});
+applyLay();
 
 // 찾기
 $('q').addEventListener('input', () => {
