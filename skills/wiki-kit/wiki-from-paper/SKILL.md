@@ -106,7 +106,7 @@ Workflow({ scriptPath: "<SKILL_DIR>/assets/paper-wiki.workflow.js", args: {
 2. 노드 2–3개를 골라 직접 읽고 원문과 대조한다(특히 Verify가 `unresolved`를 남긴 것, 결과 노드 하나).
 3. 커밋은 config `commit`. `auto`면 wiki-add 6단계 규칙(이번에 만든 파일만 경로로 add, staged 목록 확인). push 안 함.
 4. 보고: 위키 경로, 종류별 노드 수, 검사 결과(인용 수 · 실패), Verify가 고친 수 · 못 고친 것, 그림 결과, `gaps`(plan이 요구했지만 논문에 없던 것), 커밋 해시. 노드 본문은 붙이지 않는다.
-5. 다이어그램(`d-*.mmd`)을 그렸고 `그림/README.md` 에 읽는 법 링크가 없으면, 보고 끝에 한 줄로 제안한다: 기호를 처음 보는 사람을 위한 읽는 법 페이지를 만들 수 있고, 예시로 쓸 그림은 사용자가 고른다. 만드는 법은 mermaid-diagram SKILL.md 7절.
+5. 다이어그램(`d-*.mmd`)을 그렸고 `그림/README.md` 에 읽는 법 링크가 없으면, 보고 끝에 한 줄로 제안한다: 기호를 처음 보는 사람을 위한 읽는 법 페이지를 만들 수 있고, 예시로 쓸 그림은 사용자가 고른다. 그림이 세 장 이상이면 그림 뷰어(`그림/뷰어.html`)도 함께 제안한다. 만드는 법은 mermaid-diagram SKILL.md 7절 · 8절.
 
 ## 이후
 

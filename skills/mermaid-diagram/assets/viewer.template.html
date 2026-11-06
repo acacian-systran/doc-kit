@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{TITLE}} 그림</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<!-- diagram_viewer.py 가 만든 파일이다. 손으로 고치지 말고 다시 만든다. 틀은 assets/viewer.template.html. -->
+<style>
+/*SHARED_CSS*/
+/* Layout: 위 막대 + 세 칸(목록 · 그림 · 정보). 좁으면 한 칸으로 쌓는다. */
+body { font-size: 14px; }
+.vbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: var(--surface); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 10px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 40; background: var(--surface); }
+.vbar h1 { font-size: 1.05rem; margin-right: auto; }
+.vbar h1 small { font-weight: 400; color: var(--muted); margin-left: 6px; }
+.search { position: relative; flex: 0 1 320px; min-width: 0; }
+.search input { width: 100%; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+.search input:focus-visible, .btn:focus-visible, .ti:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.results { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; max-height: 60vh; overflow: auto; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.results button { display: block; width: 100%; text-align: left; font: inherit; color: var(--fg); background: none; border: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; cursor: pointer; }
+.results button:hover, .results button:focus { background: var(--accent-soft); }
+.results small { display: block; color: var(--muted); }
+.btn { font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+.btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.vmain { display: grid; grid-template-columns: 250px minmax(0, 1fr) 330px; gap: 0; min-height: calc(100vh - 56px); }
+.vlist { border-right: 1px solid var(--line); padding: 12px 10px; overflow: auto; max-height: calc(100vh - 56px); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 56px); }
+.vlist summary { font-weight: 700; cursor: pointer; padding: 4px 6px; list-style: none; }
+.vlist summary::-webkit-details-marker { display: none; }
+.tree, .tree ul { list-style: none; margin: 0; padding: 0; }
+.tree ul { padding-left: 14px; border-left: 1px solid var(--line); margin-left: 9px; }
+.ti { display: block; width: 100%; text-align: left; font: inherit; color: var(--fg); background: none; border: 0; border-radius: 6px; padding: 5px 8px; cursor: pointer; line-height: 1.4; }
+.ti:hover { background: var(--accent-soft); }
+.ti[aria-current="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.vstage { min-width: 0; padding: 14px 18px; display: grid; grid-template-rows: auto auto 1fr; gap: 8px; }
+.crumbs { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font-size: 0.85rem; color: var(--muted); }
+.crumbs button { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; }
+.stage-head h2 { font-size: 1.2rem; }
+.stage-head p { color: var(--muted); margin-top: 2px; }
+.canvas { position: relative; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; min-height: 420px; height: calc(100vh - 190px); overflow: hidden; touch-action: none; cursor: grab; }
+.canvas.dragging { cursor: grabbing; }
+.canvas > svg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none !important; }
+.zoom { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 4px; z-index: 2; }
+.zoom .btn { background: #FFFFFF; color: #1F2A35; border-color: #D9DEE3; padding: 4px 10px; }
+.canvas-hint { position: absolute; left: 12px; bottom: 10px; font-size: 0.78rem; color: #5A6672; z-index: 2; background: rgba(255,255,255,.85); padding: 2px 6px; border-radius: 4px; }
+.canvas .node { cursor: pointer; }
+.canvas .node.drill { cursor: zoom-in; }
+.canvas .node.sel .label-container, .canvas .node.sel path, .canvas .node.sel polygon, .canvas .node.sel rect { filter: drop-shadow(0 0 3px #2E5C8A) drop-shadow(0 0 1px #2E5C8A); }
+.badge circle { fill: #2E5C8A; }
+.badge text { fill: #FFFFFF; font-size: 11px; font-weight: 700; }
+.vpanel { border-left: 1px solid var(--line); padding: 12px 14px; overflow: auto; max-height: calc(100vh - 56px); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 56px); display: grid; gap: 12px; align-content: start; }
+.ptabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.ptabs .tab { padding: 8px 10px; }
+.info { display: grid; gap: 10px; }
+.info h3 { font-size: 1rem; }
+.kv { display: grid; gap: 2px; }
+.kv b { font-size: 0.75rem; letter-spacing: 0.06em; color: var(--accent); }
+.kv span { color: var(--fg); }
+.kv .m { color: var(--muted); font-size: 0.88rem; }
+.links { display: grid; gap: 6px; }
+.links .btn { text-align: left; }
+.links .btn small { display: block; color: var(--muted); }
+.empty { color: var(--muted); font-size: 0.9rem; }
+#vocab { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; max-width: 1080px; margin: 0 auto; }
+.vpanel .row { grid-template-columns: 72px minmax(0, 1fr); }
+.vpanel .row .tile svg { width: 68px; }
+@media (max-width: 1100px) {
+  .vmain { grid-template-columns: 220px minmax(0, 1fr); }
+  .vpanel { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); position: static; max-height: none; }
+}
+@media (max-width: 720px) {
+  .vmain { grid-template-columns: minmax(0, 1fr); }
+  .vlist { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
+  .vstage { padding: 12px 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .canvas { height: 60vh; min-height: 300px; }
+  .vpanel { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .search { flex-basis: 100%; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="lg-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8A94A0"/></marker>
+    <marker id="lg-xx" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M1,1 L9,9 M9,1 L1,9" stroke="#8A94A0" stroke-width="1.8" fill="none"/></marker>
+  </defs>
+</svg>
+
+<header class="vbar">
+  <h1 id="vtitle"></h1>
+  <div class="search">
+    <input id="q" type="search" placeholder="그림 · 질문 · 상자 라벨 찾기" aria-label="그림과 상자 찾기" autocomplete="off">
+    <div class="results" id="results" hidden></div>
+  </div>
+  <button class="btn" id="vocab-btn" type="button" aria-pressed="false">기호 전체</button>
+</header>
+
+<div class="vmain" id="vmain">
+  <details class="vlist" id="vlist" open>
+    <summary id="vlist-sum"></summary>
+    <ul class="tree" id="tree"></ul>
+  </details>
+  <section class="vstage">
+    <nav class="crumbs" id="crumbs" aria-label="지나온 그림"></nav>
+    <div class="stage-head"><h2 id="d-title"></h2><p id="d-question"></p></div>
+    <div class="canvas" id="canvas">
+      <div class="zoom">
+        <button class="btn" type="button" id="z-in" aria-label="확대">+</button>
+        <button class="btn" type="button" id="z-out" aria-label="축소">−</button>
+        <button class="btn" type="button" id="z-fit">맞춤</button>
+      </div>
+      <div class="canvas-hint">휠: 확대 · 끌기: 이동 · 상자 누르기: 정보 · <b>+</b> 표시 상자 두 번 누르기: 들어가기</div>
+    </div>
+  </section>
+  <aside class="vpanel">
+    <nav class="ptabs" role="tablist">
+      <button class="tab" role="tab" data-p="info" aria-selected="true">요소</button>
+      <button class="tab" role="tab" data-p="legend" aria-selected="false">이 그림의 범례</button>
+    </nav>
+    <div id="p-info" class="info"></div>
+    <div id="p-legend" class="groups" hidden></div>
+  </aside>
+</div>
+
+<section id="vocab" class="part" hidden></section>
+
+<script>
+const DATA = /*DATA*/;
+/*SHARED_JS*/
+
+LG_TERMS = DATA.terms;
+const D = DATA.diagrams;
+const byKey = Object.fromEntries(D.map(d => [d.key, d]));
+const $ = id => document.getElementById(id);
+$('vtitle').innerHTML = `${esc(DATA.title)}<small>그림 ${D.length}장</small>`;
+$('vlist-sum').textContent = `그림 목록 (${D.length})`;
+renderVocab($('vocab'), DATA.vocab, DATA.terms);
+if (matchMedia('(max-width: 720px)').matches) $('vlist').open = false;
+
+// 목록 나무
+const kids = {};
+D.forEach(d => { (kids[d.parent || ''] ||= []).push(d); });
+const treeHTML = (pk) => (kids[pk] || []).map(d =>
+  `<li><button class="ti" type="button" data-key="${d.key}">${esc(d.title)}</button>${kids[d.key] ? `<ul>${treeHTML(d.key)}</ul>` : ''}</li>`).join('');
+$('tree').innerHTML = treeHTML('');
+$('tree').addEventListener('click', e => { const b = e.target.closest('.ti'); if (b) go(b.dataset.key); });
+
+// 같은 라벨 색인 (공백 · 대소문자 무시)
+const norm = s => s.toLowerCase().replace(/\s+/g, ' ').trim();
+const labelIndex = {};
+D.forEach(d => Object.entries(d.nodes).forEach(([id, n]) => { if (!n.note) (labelIndex[norm(n.label)] ||= []).push([d.key, id]); }));
+
+let cur = null, fig = null, nodeEl = {}, sel = null, view = null, base = null;
+
+function go(key, nodeId) {
+  const d = byKey[key] || D[0];
+  if (location.hash !== '#' + d.key) history.replaceState(null, '', '#' + d.key);
+  showVocab(false);
+  if (cur !== d) { cur = d; draw(); }
+  select(nodeId || null);
+}
+
+function draw() {
+  const d = cur;
+  document.querySelectorAll('.ti').forEach(b => b.setAttribute('aria-current', String(b.dataset.key === d.key)));
+  // 지나온 길
+  const chain = []; for (let k = d.key; k; k = byKey[k].parent) chain.unshift(byKey[k]);
+  $('crumbs').innerHTML = chain.map((c, i) => i < chain.length - 1 ? `<button type="button" data-key="${c.key}">${esc(c.title)}</button><span>›</span>` : `<span>${esc(c.title)}</span>`).join('');
+  $('crumbs').querySelectorAll('button').forEach(b => b.onclick = () => go(b.dataset.key));
+  $('d-title').textContent = d.title;
+  $('d-question').textContent = d.question ? `답하는 질문: ${d.question}` : '';
+  // 그림
+  $('canvas').querySelectorAll(':scope > svg').forEach(s => s.remove());
+  $('canvas').insertAdjacentHTML('afterbegin', d.svg);
+  fig = $('canvas').querySelector(':scope > svg');
+  tameSvg(fig);
+  fig.removeAttribute('width'); fig.removeAttribute('height'); fig.style.maxWidth = 'none';
+  fig.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  const vb = fig.viewBox.baseVal;
+  base = { x: vb.x, y: vb.y, w: vb.width, h: vb.height }; view = { ...base }; applyView();
+  nodeEl = nodeMapOf(fig);
+  Object.entries(nodeEl).forEach(([id, g]) => {
+    if (!g.classList.contains('node')) return;
+    g.addEventListener('click', ev => { if (moved) return; ev.stopPropagation(); select(id); });
+    g.addEventListener('dblclick', ev => { ev.stopPropagation(); const t = (d.drill[id] || [])[0]; if (t) go(t); });
+    if (d.drill[id]) { g.classList.add('drill'); addBadge(g); }
+  });
+  renderLegend();
+}
+
+function addBadge(g) {
+  try {
+    const bb = g.getBBox();
+    const ns = 'http://www.w3.org/2000/svg';
+    const b = document.createElementNS(ns, 'g'); b.setAttribute('class', 'badge');
+    b.setAttribute('transform', `translate(${bb.x + bb.width - 2}, ${bb.y + 2})`);
+    b.innerHTML = `<circle r="8"/><text text-anchor="middle" dy="4">+</text>`;
+    g.appendChild(b);
+  } catch (e) { /* 보이지 않는 노드 */ }
+}
+
+// 확대 · 이동
+function applyView() { fig.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`); }
+function toUser(cx, cy) { const p = fig.createSVGPoint(); p.x = cx; p.y = cy; return p.matrixTransform(fig.getScreenCTM().inverse()); }
+function zoomAt(k, cx, cy) {
+  const w = Math.min(base.w * 3, Math.max(base.w / 8, view.w * k)); k = w / view.w;
+  const p = cx === undefined ? { x: view.x + view.w / 2, y: view.y + view.h / 2 } : toUser(cx, cy);
+  view = { x: p.x - (p.x - view.x) * k, y: p.y - (p.y - view.y) * k, w: view.w * k, h: view.h * k }; applyView();
+}
+$('canvas').addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.deltaY > 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY); }, { passive: false });
+$('z-in').onclick = () => zoomAt(1 / 1.3); $('z-out').onclick = () => zoomAt(1.3); $('z-fit').onclick = () => { view = { ...base }; applyView(); };
+let drag = null, moved = false;
+$('canvas').addEventListener('pointerdown', e => {
+  if (e.target.closest('.zoom')) return;
+  const r = fig.getBoundingClientRect();
+  drag = { x: e.clientX, y: e.clientY, v: { ...view }, s: Math.max(view.w / r.width, view.h / r.height) }; moved = false;
+});
+window.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!moved && Math.hypot(dx, dy) < 4) return;
+  moved = true; $('canvas').classList.add('dragging');
+  view.x = drag.v.x - dx * drag.s; view.y = drag.v.y - dy * drag.s; applyView();
+});
+window.addEventListener('pointerup', () => { drag = null; $('canvas').classList.remove('dragging'); setTimeout(() => moved = false, 0); });
+$('canvas').addEventListener('click', e => { if (!moved && !e.target.closest('.node, .zoom')) select(null); });
+
+// 요소 정보
+function select(id) {
+  fig && fig.querySelectorAll('.sel').forEach(e => e.classList.remove('sel'));
+  sel = id;
+  if (id && nodeEl[id]) nodeEl[id].classList.add('sel');
+  setPanel('info');
+  const d = cur, info = $('p-info');
+  if (!id || !d.nodes[id]) {
+    const drills = Object.entries(d.drill);
+    const parent = d.parent ? byKey[d.parent] : null;
+    info.innerHTML = `
+      <p class="empty">상자를 누르면 그 요소의 뜻과 연결이 여기에 나온다.</p>
+      ${parent ? `<div class="kv"><b>이 그림의 위</b><div class="links"><button class="btn" data-go="${parent.key}">${esc(parent.title)}</button></div></div>` : ''}
+      ${drills.length ? `<div class="kv"><b>들어갈 수 있는 상자 (${drills.length})</b><div class="links">${drills.map(([nid, ts]) => ts.map(t =>
+        `<button class="btn" data-go="${t}">${esc(d.nodes[nid] ? d.nodes[nid].label : nid)}<small>→ ${esc(byKey[t].title)}</small></button>`).join('')).join('')}</div></div>` : ''}
+      ${!d.flow ? `<p class="empty">이 그림은 flowchart 가 아니라 요소 정보와 범례가 없다.</p>` : ''}`;
+  } else {
+    const n = d.nodes[id];
+    const drills = d.drill[id] || [];
+    const same = (labelIndex[norm(n.label)] || []).filter(([k, nid]) => !(k === d.key && nid === id));
+    info.innerHTML = `
+      <h3>${esc(n.label)}</h3>
+      <div class="kv"><b>모양</b><span>${esc(n.shape)}</span><span class="m">${tipify(n.shapeMeaning)}</span></div>
+      ${n.cls ? `<div class="kv"><b>색</b><span>${esc(n.cls)}${n.clsLook ? ' · ' + esc(n.clsLook) : ''}</span><span class="m">${tipify(n.clsMeaning)}</span></div>` : ''}
+      ${drills.length ? `<div class="kv"><b>들어가기</b><div class="links">${drills.map(t => `<button class="btn" data-go="${t}">${esc(byKey[t].title)}<small>${esc(byKey[t].question || '')}</small></button>`).join('')}</div></div>` : ''}
+      ${d.outside[id] ? `<div class="kv"><b>연결된 문서 (그림 없음)</b><span class="m"><code>${esc(d.outside[id])}</code></span></div>` : ''}
+      ${same.length ? `<div class="kv"><b>같은 라벨이 나오는 다른 그림</b><div class="links">${same.map(([k, nid]) => `<button class="btn" data-go="${k}" data-node="${nid}">${esc(byKey[k].title)}</button>`).join('')}</div></div>` : ''}
+      <div class="kv"><b>id</b><span class="m"><code>${esc(id)}</code></span></div>`;
+  }
+  info.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go, b.dataset.node));
+}
+
+// 범례 (이 그림에 쓰인 것)
+let pinned = null;
+function renderLegend() {
+  const d = cur, box = $('p-legend'); pinned = null;
+  if (!d.flow) { box.innerHTML = '<p class="empty">flowchart 가 아니라 범례를 만들지 않았다.</p>'; return; }
+  const rowsByKey = {};
+  box.innerHTML = LG_KINDS.filter(([k]) => (d.rows[k] || []).length).map(([k, word]) =>
+    `<div><div class="sec-head"><h3>쓰인 ${word} ${d.rows[k].length}가지</h3></div><div class="rows">${d.rows[k].map((r, i) => { rowsByKey[`${k}-${i}`] = r; return rowHTML(k, r, `${k}-${i}`); }).join('')}</div></div>`).join('')
+    + (d.unused.length ? `<div><div class="sec-head"><h3>이 그림에는 없는 것</h3></div><div class="chips">${d.unused.map(u => `<span class="chip">${esc(u)}</span>`).join('')}</div></div>` : '');
+  const show = k => {
+    fig.querySelectorAll('.hl').forEach(e => e.classList.remove('hl'));
+    if (!k) { fig.classList.remove('focusing'); return; }
+    fig.classList.add('focusing'); elsFor(fig, nodeEl, rowsByKey[k]).forEach(e => e.classList.add('hl'));
+  };
+  box.querySelectorAll('.row').forEach(b => {
+    b.onmouseenter = () => { if (!pinned) show(b.dataset.k); };
+    b.onmouseleave = () => { if (!pinned) show(null); };
+    b.onfocus = () => { if (!pinned) show(b.dataset.k); };
+    b.onblur = () => { if (!pinned) show(null); };
+    b.onclick = () => {
+      box.querySelectorAll('.row.on').forEach(r => { r.classList.remove('on'); r.setAttribute('aria-pressed', 'false'); });
+      if (pinned === b.dataset.k) { pinned = null; show(null); return; }
+      pinned = b.dataset.k; b.classList.add('on'); b.setAttribute('aria-pressed', 'true'); show(pinned);
+    };
+  });
+}
+function setPanel(p) {
+  document.querySelectorAll('.ptabs .tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.p === p)));
+  $('p-info').hidden = p !== 'info'; $('p-legend').hidden = p !== 'legend';
+  if (p !== 'legend' && fig) { fig.classList.remove('focusing'); fig.querySelectorAll('.hl').forEach(e => e.classList.remove('hl')); pinned = null; }
+}
+document.querySelectorAll('.ptabs .tab').forEach(t => t.onclick = () => setPanel(t.dataset.p));
+
+// 기호 전체
+function showVocab(on) {
+  $('vocab').hidden = !on; $('vmain').hidden = on; $('vocab-btn').setAttribute('aria-pressed', String(on));
+  if (on && location.hash !== '#vocab') history.replaceState(null, '', '#vocab');
+}
+$('vocab-btn').onclick = () => { const on = $('vocab').hidden; showVocab(on); if (!on) go(cur ? cur.key : D[0].key); };
+
+// 찾기
+$('q').addEventListener('input', () => {
+  const q = norm($('q').value), res = $('results');
+  if (!q) { res.hidden = true; return; }
+  const hits = [];
+  D.forEach(d => { if (norm(d.title + ' ' + d.question).includes(q)) hits.push({ k: d.key, t: d.title, s: '그림' }); });
+  D.forEach(d => Object.entries(d.nodes).forEach(([id, n]) => { if (norm(n.label).includes(q)) hits.push({ k: d.key, n: id, t: n.label, s: d.title }); }));
+  res.innerHTML = hits.slice(0, 40).map(h => `<button type="button" data-go="${h.k}" ${h.n ? `data-node="${h.n}"` : ''}>${esc(h.t)}<small>${esc(h.s)}</small></button>`).join('') || '<p class="empty" style="padding:8px 10px">찾은 것이 없다.</p>';
+  res.hidden = false;
+  res.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { res.hidden = true; $('q').value = ''; go(b.dataset.go, b.dataset.node); });
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('results').hidden = true; select(null); } });
+document.addEventListener('click', e => { if (!e.target.closest('.search')) $('results').hidden = true; });
+
+// 처음 열 그림: 주소의 #, 없으면 목록 맨 위
+function route() {
+  const h = location.hash.slice(1);
+  if (h === 'vocab') { showVocab(true); return; }
+  go(byKey[h] ? h : (kids[''] || D)[0].key);
+}
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>

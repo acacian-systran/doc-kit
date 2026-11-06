@@ -407,8 +407,13 @@ def build_example(mmd, vocab, notes, palette_boxes):
                               "where": items.get(k, names(ids)), "nodes": ids, "edges": att})
     unknown = [c for c in by_cls if c not in cls_by]
 
+    def lab(i):  # 선 끝이 subgraph 일 수도 있다
+        if i in nodes:
+            return nodes[i]["label"]
+        return subgraphs[i]["label"] if i in subgraphs else i
+
     def edesc(es):
-        return " · ".join(f"{short(nodes[a]['label'], 16)} → {short(nodes[b]['label'], 16)}" for a, b, *_ in es)
+        return " · ".join(f"{short(lab(a), 16)} → {short(lab(b), 16)}" for a, b, *_ in es)
 
     by_op = OrderedDict()
     for e in edges:
@@ -455,6 +460,13 @@ def build_example(mmd, vocab, notes, palette_boxes):
         "rows": rows,
         "unused": unused,
     }, keys, unknown, stale
+
+
+def inline_shared(tpl):
+    """공용 CSS · JS 를 틀에 끼운다 (legend.shared.css · legend.shared.js)."""
+    css = (HERE / "legend.shared.css").read_text(encoding="utf-8")
+    js = (HERE / "legend.shared.js").read_text(encoding="utf-8")
+    return tpl.replace("/*SHARED_CSS*/", css, 1).replace("/*SHARED_JS*/", js, 1)
 
 
 def main():
@@ -507,7 +519,7 @@ def main():
     data = {"lede": lede, "terms": TERMS, "vocab": vocab, "example": example}
     tpl = (HERE / "legend.template.html").read_text(encoding="utf-8")
     js = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
-    out = tpl.replace("/*DATA*/", js, 1).replace("<!--SVG-->", svg_text, 1)
+    out = inline_shared(tpl).replace("/*DATA*/", js, 1).replace("<!--SVG-->", svg_text, 1)
     Path(a.out).write_text(out, encoding="utf-8")
     print(f"→ {a.out}")
 

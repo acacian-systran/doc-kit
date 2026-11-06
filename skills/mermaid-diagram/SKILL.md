@@ -1,6 +1,6 @@
 ---
 name: mermaid-diagram
-description: Draw architecture, pipeline, sequence, state, ER and schedule diagrams as Mermaid source (.mmd) that renders natively in GitHub · Notion · mermaid.ai and to SVG via mermaid-cli, using a fixed Korean visual vocabulary — shape means storage kind, color means role — so structure reads before labels. Starts from a brief (diagram type + question + key elements, the prompt structure Mermaid AI recommends) so a request can be turned into a template fill-in. Use whenever the user wants a system diagram, data-flow or pipeline diagram, module or runtime/infra diagram, call sequence, state machine, ER diagram, gantt/일정표, or asks to 아키텍처 그림·다이어그램·구조도·플로우·순서도·상태도·ERD·mermaid·머메이드 를 그려달라, and when revising or reviewing existing .mmd files or ```mermaid blocks, or setting up a docs/diagrams directory. Also builds a 그림 읽는 법 page for people new to the vocabulary — every shape, color, line and container with its meaning, plus an optional tab on one diagram the user picks where hovering an item lights up only the boxes and lines that use it — when someone asks 이 그림 어떻게 읽어 · 기호 뜻 · 범례 · 그림 읽는 법 · 읽는 법 페이지 · legend. Provides the palette, six templates, the grammar with its parser pitfalls, a render script, the legend-page generator, and the conventions for the diagram directory's README.
+description: Draw architecture, pipeline, sequence, state, ER and schedule diagrams as Mermaid source (.mmd) that renders natively in GitHub · Notion · mermaid.ai and to SVG via mermaid-cli, using a fixed Korean visual vocabulary — shape means storage kind, color means role — so structure reads before labels. Starts from a brief (diagram type + question + key elements, the prompt structure Mermaid AI recommends) so a request can be turned into a template fill-in. Use whenever the user wants a system diagram, data-flow or pipeline diagram, module or runtime/infra diagram, call sequence, state machine, ER diagram, gantt/일정표, or asks to 아키텍처 그림·다이어그램·구조도·플로우·순서도·상태도·ERD·mermaid·머메이드 를 그려달라, and when revising or reviewing existing .mmd files or ```mermaid blocks, or setting up a docs/diagrams directory. Also builds a 그림 읽는 법 page for people new to the vocabulary — every shape, color, line and container with its meaning, plus an optional tab on one diagram the user picks where hovering an item lights up only the boxes and lines that use it — when someone asks 이 그림 어떻게 읽어 · 기호 뜻 · 범례 · 그림 읽는 법 · 읽는 법 페이지 · legend. Also builds a web viewer for a whole diagram directory (list tree, zoom and pan, double-click a box to open the diagram that expands it, element info, per-diagram legend highlight, search) when someone asks 그림 뷰어 · 다이어그램 뷰어 · 그림 웹으로 보기 · 그림들 한 번에 둘러보기 · Structurizr 처럼. Provides the palette, six templates, the grammar with its parser pitfalls, a render script, the legend-page generator, the diagram viewer generator, and the conventions for the diagram directory's README.
 ---
 
 # Mermaid 다이어그램
@@ -29,6 +29,9 @@ description: Draw architecture, pipeline, sequence, state, ER and schedule diagr
 | `assets/legend.html` | 그림 기호 읽는 법 — 기호 전체. 미리 만들어 둔 것. 처음 보는 사람에게 그대로 준다 |
 | `assets/legend_page.py` | 읽는 법 페이지 생성기. 뜻은 grammar.md · 팔레트에서 읽는다. `--example` 로 예시 그림 탭을 더한다 |
 | `assets/legend.template.html` | 위 페이지의 틀 |
+| `assets/diagram_viewer.py` | 그림 디렉터리 하나를 둘러보는 뷰어(HTML 한 장) 생성기 |
+| `assets/viewer.template.html` | 뷰어의 틀 |
+| `assets/legend.shared.css` · `legend.shared.js` | 읽는 법 페이지와 뷰어가 함께 쓰는 스타일 · 그리기 도구. 두 생성기가 인라인한다 |
 
 템플릿마다 `.svg` 가 옆에 있다. 파일을 열지 않고도 뼈대가 어떻게 생겼는지 볼 수 있다.
 
@@ -162,3 +165,34 @@ python3 <스킬 경로>/assets/legend_page.py --palette docs/diagrams/_palette.m
 그림 디렉터리 README 에 이미 읽는 법 링크가 있으면 제안하지 않는다. 사용자가 한 번 거절하면
 그 프로젝트에서 다시 제안하지 않는다. 만들었으면 README 의 "읽는 법" 절에 링크를 단다
 (`references/diagrams-readme.md`).
+
+## 8. 그림 뷰어
+
+그림 디렉터리 하나를 웹에서 둘러보는 HTML 한 장이다. 그림이 여러 장이고 서로 이어져
+있을 때(요약 → 펼침, 기법 → 기법) 쓴다. 렌더된 `.svg` 가 있는 그림만 들어간다.
+
+```bash
+python3 <스킬 경로>/assets/diagram_viewer.py <그림 디렉터리> -o <그림 디렉터리>/뷰어.html
+```
+
+| 자리 | 하는 일 |
+|---|---|
+| 왼쪽 목록 | 그림 나무. 요약 그림 아래에 그 상자를 펼친 그림이 달린다 |
+| 가운데 | 그림. 휠로 확대, 끌어서 이동. 상자를 누르면 정보, `+` 표시가 있는 상자를 두 번 누르면 그 그림으로 들어간다. 위에 지나온 길 |
+| 오른쪽 · 요소 | 누른 상자의 모양 · 색의 뜻, 들어갈 그림, 연결된 문서, 같은 라벨이 나오는 다른 그림 |
+| 오른쪽 · 범례 | 이 그림에 쓰인 기호. 항목에 올리면 쓰인 곳만 켜진다 (7절과 같은 것) |
+| 위 | 그림 제목 · 질문 · 상자 라벨 찾기, 기호 전체 |
+
+**그림 사이의 연결은 따로 적지 않는다.** `.mmd` 에 이미 있는 것에서 뽑는다.
+- `click <id> href "<경로>"` — 경로의 파일 이름이 디렉터리의 다른 그림(`X` 또는 `d-X`)과
+  같으면 그 상자에서 그 그림으로 들어간다. 같은 그림이 없으면 "연결된 문서"로만 보인다.
+- `%% 요약 그림 d-X 의 ② 상자를 펼친 것` — d-X 에서 라벨이 ② 로 시작하는 상자에서 들어간다.
+  번호(①–⑳)가 라벨 맨 앞에 있어야 잡힌다.
+- 파일 이름이 `d-X-stepK` 이고 주석이 없으면 목록에서 d-X 아래에 달기만 한다.
+
+**"같은 라벨이 나오는 다른 그림"은 라벨 글자가 같을 때만 잡는다.** 그림마다 id 가 달라
+같은 요소인지 알 수 없기 때문이다. flowchart 가 아닌 그림은 보기만 되고 요소 정보와
+범례가 없다.
+
+`.mmd` 를 고치면 다시 렌더하고 뷰어도 다시 만든다. 만든 뷰어는 그림 디렉터리 README 에
+링크한다. 읽는 법 페이지(7절)를 제안하는 때에, 그림이 세 장 이상이면 뷰어도 함께 제안한다.
