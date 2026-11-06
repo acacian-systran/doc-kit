@@ -17,6 +17,11 @@
 - `%% 요약 그림 d-X 의 ② 상자를 펼친 것` — d-X 의 ② 로 시작하는 상자에서 이 그림으로 들어간다.
 - 파일 이름 `d-X-stepK` — 주석이 없으면 d-X 아래에 단다.
 
+용어 설명: 그림에 `%% 용어: frontier, R, r′=r′ (FK triple)` 줄을 두면 용어집(`--glossary`, 기본은
+그림 디렉터리나 그 위의 `용어.md` · `glossary.md`)의 그 행 뜻을 뷰어에 싣는다. `글자=용어집 키` 는
+그림에 적힌 글자와 용어집 행 이름이 다를 때(같은 기호가 두 뜻일 때) 쓴다. 뜻은 그림 위에 붙이지 않고
+상자를 눌렀을 때 정보 칸 · 정보 칸의 "용어" 탭 · 제목과 질문의 점선 밑줄 tooltip 에만 나온다.
+
 디렉터리에 `_elements.md`(공유 요소 목록, elements_lint.py 참고)가 있으면 그 id 의 요소는
 "이 요소가 나오는 그림"을 모두 보여 주고, 목록 아래에 공유 요소 목록이 붙는다. 없으면 라벨
 글자가 같은 요소만 이어 준다.
@@ -79,6 +84,74 @@ def read_diagram(mmd, vocab, palette_boxes):
     return d
 
 
+GLOSSARY_NAMES = ("용어.md", "glossary.md")
+
+
+def find_glossary(d):
+    for p in (d, d.parent, d.parent.parent):
+        for n in GLOSSARY_NAMES:
+            if (p / n).exists():
+                return p / n
+    return None
+
+
+def read_glossary(path):
+    """Markdown 표의 행을 {키: {name, tr, def, page}} 로 읽는다. 첫 열이 키, 머리글에 '뜻' · '정의' 가 든 열이 뜻."""
+    out, head = {}, None
+    split = lambda line: [c.strip().replace("\\|", "|") for c in re.split(r"(?<!\\)\|", line.strip().strip("|"))]
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.lstrip().startswith("|"):
+            head = None
+            continue
+        cells = split(line)
+        if head is None:
+            head = cells
+            continue
+        if all(re.fullmatch(r":?-+:?", c) for c in cells if c):
+            continue
+        col = lambda *ws: next((i for i, h in enumerate(head) if any(w in h for w in ws)), None)
+        di, ti, pi = col("뜻", "정의", "Definition", "meaning"), col("번역"), col("쪽", "page")
+        if di is None or di >= len(cells):
+            continue
+        key = cells[0].strip("`").strip()
+        row = {"name": key, "tr": cells[ti] if ti is not None and ti < len(cells) and cells[ti] != key else "",
+               "def": re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", cells[di]).replace("`", ""), "page": cells[pi] if pi is not None and pi < len(cells) else ""}
+        out.setdefault(key, row)
+        m = re.fullmatch(r"(.+?) \(([A-Z]{2,6})\)", key)  # foreign key (FK) → foreign key, FK
+        if m:
+            for alias in m.groups():
+                out.setdefault(alias, row)
+    return out
+
+
+BOUND = r"A-Za-z0-9_^′'−-"
+
+
+def attach_terms(d, text, glossary, warn):
+    m = re.search(r"^%%\s*용어:\s*(.+)$", text, re.M)
+    if not m:
+        return
+    terms = {}
+    for item in [x.strip() for x in m.group(1).split(",") if x.strip()]:
+        shown, _, key = item.partition("=")
+        shown, key = shown.strip(), (key or shown).strip()
+        row = glossary.get(key)
+        if not row:
+            warn(f"용어집에 없음: {d['file']} · {key}")
+            continue
+        t = terms.setdefault(row["name"], {**row, "match": [], "nodes": [], "head": False})
+        t["match"].append(shown)
+        pat = re.compile(rf"(?<![{BOUND}]){re.escape(shown)}(?![{BOUND}])")
+        for nid, n in d["nodes"].items():
+            if pat.search(n["label"]) and nid not in t["nodes"]:
+                t["nodes"].append(nid)
+        if pat.search(d["title"] + " " + d["question"]):
+            t["head"] = True
+        if not t["nodes"] and not t["head"]:
+            warn(f"그림에 안 나옴: {d['file']} · {shown}")
+    d["terms"] = list(terms.values())
+
+
 def link(diagrams):
     by_stem = {d["stem"]: d for d in diagrams}
     for d in diagrams:
@@ -136,12 +209,17 @@ def main():
     ap.add_argument("-o", "--out", required=True)
     ap.add_argument("--title", help="기본: 디렉터리 이름 (그림 · wiki · docs 같은 이름이면 위로 올라간 이름)")
     ap.add_argument("--palette", type=Path, help="기본: 디렉터리의 _palette.mmd, 없으면 스킬의 것")
+    ap.add_argument("--glossary", type=Path, help="용어 설명을 가져올 Markdown 표. 기본: 그림 디렉터리나 그 위의 용어.md · glossary.md")
     ap.add_argument("--grammar", type=Path, default=HERE.parent / "references" / "grammar.md")
     a = ap.parse_args()
 
     palette = a.palette or (a.dir / "_palette.mmd" if (a.dir / "_palette.mmd").exists() else HERE / "_palette.mmd")
     vocab = lp.build_vocab(a.grammar, palette)
     _, palette_boxes = lp.read_palette(palette)
+
+    gpath = a.glossary or find_glossary(a.dir.resolve())
+    glossary = read_glossary(gpath) if gpath and gpath.exists() else {}
+    term_warns = []
 
     diagrams, used = [], set()
     for i, mmd in enumerate(sorted(p for p in a.dir.rglob("*.mmd") if not p.name.startswith("_"))):
@@ -150,12 +228,15 @@ def main():
             print(f"! svg 없음, 건너뜀: {mmd.relative_to(a.dir)}  (render.sh 로 먼저 그린다)", file=sys.stderr)
             continue
         d = read_diagram(mmd, vocab, palette_boxes)
+        attach_terms(d, mmd.read_text(encoding="utf-8"), glossary, term_warns.append)
         d["key"] = route_key(mmd.stem, i, used)
         d["svg"] = re.sub(r"<\?xml[^>]*\?>", "", svg.read_text(encoding="utf-8"))
         if "skip_reason" in d:
             print(f"· 범례 없이 넣음 (flowchart 아님): {mmd.name}", file=sys.stderr)
             d.pop("skip_reason")
         diagrams.append(d)
+    for w in term_warns:
+        print(f"! {w}", file=sys.stderr)
     if not diagrams:
         sys.exit(f"{a.dir}: 렌더된 그림(.mmd + .svg)이 없다")
     link(diagrams)
@@ -189,7 +270,9 @@ def main():
     Path(a.out).write_text(out, encoding="utf-8")
     roots = sum(1 for d in diagrams if not d["parent"])
     drills = sum(len(d["drill"]) for d in diagrams)
-    print(f"→ {a.out}  (그림 {len(diagrams)}장 · 맨 위 {roots}장 · 들어가는 상자 {drills}개 · 공유 요소 {len(elements)}개)")
+    nterm = sum(len(d.get("terms", [])) for d in diagrams)
+    gl = f" · 용어 {nterm}개 ({gpath.name})" if glossary else ""
+    print(f"→ {a.out}  (그림 {len(diagrams)}장 · 맨 위 {roots}장 · 들어가는 상자 {drills}개 · 공유 요소 {len(elements)}개{gl})")
 
 
 if __name__ == "__main__":
