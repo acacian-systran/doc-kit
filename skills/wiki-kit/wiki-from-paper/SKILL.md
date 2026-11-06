@@ -1,6 +1,6 @@
 ---
 name: wiki-from-paper
-description: Turn one academic paper (PDF, arXiv link) into a wiki-kit wiki in one run — extracts page-anchored text with paper-tutor's pdftext.py, sets up papers/<citekey>/wiki/ with a paper preset config, plans the node list (개념 · 기법 · 결과 · 한계, in reading order) and a glossary for the user to approve, then runs a workflow that drafts each node in parallel, has an independent agent verify every quote and number against the paper pages, optionally draws figures (svg in the wfig style, mermaid, or none — chosen per run), and links index, first appearances, glossary and log. Every quote is checked by a script against the page it names. Use when the user says 논문 위키로 · 논문을 위키화 · 이 논문 위키 만들어줘 · 논문 노드로 쪼개줘 · paper to wiki · wikify this paper, or hands over a paper and asks for wiki nodes. To add a single node later use wiki-add; to answer from the wiki use wiki-ask. Part of wiki-kit; needs paper-tutor installed.
+description: Turn one academic paper (PDF, arXiv link) into a wiki-kit wiki in one run — extracts page-anchored text with paper-tutor's pdftext.py, sets up papers/<citekey>/wiki/ with a paper preset config, plans the node list (개념 · 기법 · 결과 · 한계, in reading order) and a glossary for the user to approve, then runs a workflow that drafts each node in parallel, has an independent agent verify every quote and number against the paper pages, optionally draws figures (by default a Mermaid summary diagram plus per-step detail diagrams and a valued wfig example figure per method node; diagram-only, example-only or none can be chosen per run), and links index, first appearances, glossary and log. Every quote is checked by a script against the page it names. Use when the user says 논문 위키로 · 논문을 위키화 · 이 논문 위키 만들어줘 · 논문 노드로 쪼개줘 · paper to wiki · wikify this paper, or hands over a paper and asks for wiki nodes. To add a single node later use wiki-add; to answer from the wiki use wiki-ask. Part of wiki-kit; needs paper-tutor installed.
 ---
 
 # 논문 → 위키
@@ -13,7 +13,7 @@ PDF/arXiv ─► 0 입력 · 옵션 ─► 1 텍스트 추출 ─► 2 위키 �
 ```
 
 경로:
-- `SKILL_DIR` = 이 스킬의 실제 경로(`realpath`로 링크를 푼 것). `WIKI_KIT` = 그 상위. `PDFTEXT` = `<paper-tutor 스킬>/assets/pdftext.py`.
+- `SKILL_DIR` = 이 스킬의 실제 경로(`realpath`로 링크를 푼 것). `WIKI_KIT` = 그 상위. `PDFTEXT` = `<paper-tutor 스킬>/assets/pdftext.py`. `MERMAID` = `<mermaid-diagram 스킬>` 실제 경로(`figures`가 `all` · `diagram`일 때).
 
 ## 0. 입력 · 옵션
 
@@ -22,7 +22,7 @@ PDF/arXiv ─► 0 입력 · 옵션 ─► 1 텍스트 추출 ─► 2 위키 �
 | 옵션 | 기본값 | 다른 값 |
 |---|---|---|
 | 위치 | `papers/<citekey>/wiki/` (작업 디렉터리 기준, paper-tutor와 같은 `papers/` 규칙) | 사용자가 준 경로 |
-| `figures` | `svg` | `mermaid` · `none` (references/figures.md) |
+| `figures` | `all` (기법: 요약 다이어그램 + 단계 펼침 다이어그램 + 예시 그림, 결과: 예시 그림) | `diagram` · `svg` · `none` (references/figures.md) |
 | 노드 수 | 20–35 | 사용자 지정 |
 | `ending` | 명사형 | 한다체 · 합니다체 |
 | 커밋 | 위키가 git 안이면 `ask`, 밖이면 `never` | `auto` |
@@ -50,7 +50,7 @@ python3 $PDFTEXT paper.pdf            # paper.txt
 1. `<위키>/wiki.config.md` ← `assets/wiki.config.paper.md`의 `{{…}}`를 채움. `{{SKILL_DIR}}`는 절대 경로.
 2. `<위키>/index.md` ← `$WIKI_KIT/wiki-init/assets/index.template.md`, 노드 종류는 개념 · 기법 · 결과 · 한계 · 헷갈린-점.
 3. `<위키>/log.md` ← `# <제목> 위키 변경 기록` + 오늘 날짜 한 줄.
-4. `figures: svg`면 `assets/wfig.py`를 `<위키>/그림/wfig.py`로 복사.
+4. `figures`가 `all` · `svg`면 `assets/wfig.py`를 `<위키>/그림/wfig.py`로, `all` · `diagram`이면 `$MERMAID/assets/_palette.mmd`를 `<위키>/그림/_palette.mmd`로 복사.
 
 ## 3. plan · 용어표 (메인 세션이 직접)
 
@@ -68,7 +68,7 @@ python3 $PDFTEXT paper.pdf            # paper.txt
 - 헷갈린-점은 만들지 않는다. 사용자가 읽다가 헷갈린 질문만 나중에 `wiki-add`로.
 - **순서**: 앞 노드를 알아야 뒤 노드를 읽을 수 있는 순서(paper-tutor prep 2절).
 - `anchors`는 paper.txt에서 grep으로 확인한 쪽 · 절 · 표. `brief`는 노드가 반드시 담을 것 한 줄.
-- `figure: y`는 `figures`가 `none`이 아닐 때, 값이 든 예로 보여 줄 수 있는 기법 · 결과에만(보통 3–8개).
+- `figure: y`는 `figures`가 `none`이 아닐 때, 단계가 있는 기법과 값이 든 예로 보여 줄 수 있는 결과에만(보통 3–8개). 기법은 다이어그램 + 예시 그림, 결과는 예시 그림만.
 - 표제어가 원문에 있는지 `grep -i`로 확인.
 
 **`<위키>/용어.md`** — `| 용어(영어) | 번역어 | 한 줄 뜻 | 쪽 | 메모 |`. plan의 모든 title + 노드 본문에 반복해 나올 용어. 노드끼리 같은 말을 쓰게 하는 표다.
@@ -81,7 +81,7 @@ python3 $PDFTEXT paper.pdf            # paper.txt
 
 ```
 Workflow({ scriptPath: "<SKILL_DIR>/assets/paper-wiki.workflow.js", args: {
-  wiki_root, paper_txt, skill_dir: SKILL_DIR, wiki_kit_dir: WIKI_KIT, pdftext: PDFTEXT,
+  wiki_root, paper_txt, skill_dir: SKILL_DIR, wiki_kit_dir: WIKI_KIT, pdftext: PDFTEXT, mermaid_dir: MERMAID,
   ending, figures, nodes: [{type, file, title, aliases: [...], anchors, brief, figure: true|false}, ...] } })
 ```
 
@@ -91,7 +91,7 @@ Workflow({ scriptPath: "<SKILL_DIR>/assets/paper-wiki.workflow.js", args: {
 |---|---|---|
 | Draft | 노드마다 하나, 동시에 | 자기 노드 파일만 |
 | Verify | 노드마다 하나, 쓴 agent와 다름. 문장마다 원문 대조 · 고침 | 자기 노드 파일만 |
-| Figure | `figure: y` 노드만 | 자기 노드 + `그림/*<file>*` |
+| Figure | `figure: y` 노드만. 다이어그램(① · ②) → 예시 그림(③) 순서로 한 agent | 자기 노드 + `그림/*<file>*` |
 | Link | 하나 | index · 노드 링크 · 용어표 메모 · log · `그림/README.md` |
 
 부분 재실행: `only: [file, ...]`(그 노드만), `stages: [...]`(예: 그림만 나중에 `["figure", "link"]`). 실패하면 `resumeFromRunId`로 이어서.
@@ -111,4 +111,4 @@ Workflow({ scriptPath: "<SKILL_DIR>/assets/paper-wiki.workflow.js", args: {
 
 - 읽다가 헷갈린 것 → `wiki-add`(헷갈린-점). config가 이 위키를 가리키므로 그대로 동작.
 - 위키에 묻기 → `wiki-ask`. 점검 → `wiki-lint`.
-- 그림만 나중에 → 4단계를 `figures: "svg", only: [...], stages: ["figure", "link"]`로. plan의 `figure`를 y로 바꾼 뒤.
+- 그림만 나중에 → 4단계를 `figures: "all", only: [...], stages: ["figure", "link"]`로. plan의 `figure`를 y로 바꾼 뒤. 이미 예시 그림이 있는 위키에 다이어그램만 더하려면 `figures: "diagram"`.

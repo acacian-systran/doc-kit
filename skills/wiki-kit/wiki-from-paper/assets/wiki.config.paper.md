@@ -47,4 +47,4 @@ ignore: plan.md, 그림
 
 ## 그림
 
-- 방식: `{{FIGURES}}`(svg · mermaid · none). svg는 `그림/make_w_<이름>.py` + `<이름>-labels.md`, 공통 처리는 `그림/wfig.py`.
+- 방식: `{{FIGURES}}`(all · diagram · svg · none). 다이어그램은 `그림/d-<이름>.mmd` · `d-<이름>-stepK.mmd` + `d-<이름>-labels.md`, 팔레트는 `그림/_palette.mmd`. 예시 그림은 `그림/make_w_<이름>.py` + `w-<이름>-labels.md`, 공통 처리는 `그림/wfig.py`. 기준은 `{{SKILL_DIR}}/references/figures.md`.

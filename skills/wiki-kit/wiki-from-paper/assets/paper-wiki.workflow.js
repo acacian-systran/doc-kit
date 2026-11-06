@@ -5,12 +5,12 @@ export const meta = {
   phases: [
     { title: 'Draft', detail: 'one agent per node, writes only its own file' },
     { title: 'Verify', detail: 'independent check of every quote and number against paper.txt' },
-    { title: 'Figure', detail: 'svg (wfig) or mermaid, only nodes marked for a figure' },
+    { title: 'Figure', detail: 'Mermaid summary + step diagrams for methods, wfig example figure; only nodes marked for a figure' },
     { title: 'Link', detail: 'one agent: index, first-appearance links, glossary, log, figure README, checks' },
   ],
 }
 
-// args: { wiki_root, paper_txt, skill_dir, wiki_kit_dir, pdftext, ending, figures: 'svg'|'mermaid'|'none',
+// args: { wiki_root, paper_txt, skill_dir, wiki_kit_dir, pdftext, mermaid_dir, ending, figures: 'all'|'diagram'|'svg'|'none',
 //         nodes: [{type, file, title, aliases, anchors, brief, figure}], only?: [file], stages?: ['draft','verify','figure','link'] }
 const A = args
 const STAGES = A.stages || ['draft', 'verify', 'figure', 'link']
@@ -69,10 +69,18 @@ Edit only this node file. Return how many claims you checked, what you fixed, wh
   async (r, n) => {
     if (!r) return null
     if (!STAGES.includes('figure') || A.figures === 'none' || !n.figure) return { ...r, f: null }
-    const how = A.figures === 'svg'
-      ? `Make an svg figure with wfig. Read ${A.skill_dir}/references/figures.md first and follow it exactly (one valued example from the paper, shapes for right/wrong, terse labels, step figures).
-Write ${A.wiki_root}/그림/make_w_${n.file}.py and ${A.wiki_root}/그림/w-${n.file}-labels.md (the '## 원문 확인' rows quote the paper page for each label that states a fact), run 'cd ${A.wiki_root}/그림 && python3 make_w_${n.file}.py', open the PNGs with Read to check nothing overlaps or overflows, fix and rerun until clean. Then insert the figure block into the node right after the '**한 줄로:**' (or '**답:**') line, with the step figures in <details>.`
-      : `Add one \`\`\`mermaid flowchart to the node right after the '**한 줄로:**' line: the method's steps as the paper orders them, labels in glossary terms, at most 8 nodes, then one line under it saying how to read it.`
+    const FIGS = A.figures || 'all'
+    const isMethod = n.type === '기법'
+    const wantDiagram = isMethod && (FIGS === 'all' || FIGS === 'diagram')
+    const wantExample = FIGS === 'svg' || (FIGS === 'all')
+    if (!wantDiagram && !wantExample) return { ...r, f: null }
+    const parts = []
+    if (wantDiagram) parts.push(`DIAGRAMS (① summary + ② step detail). Read ${A.skill_dir}/references/figures.md ("세 층", "다이어그램 기준") and ${A.mermaid_dir}/references/grammar.md first, and follow them exactly.
+Write ${A.wiki_root}/그림/d-${n.file}.mmd (summary, 4–8 boxes, step numbers, no values) and one d-${n.file}-stepK.mmd per step worth expanding (each MUST add inputs, decisions as diamonds, branches, outputs and at least one value from the paper that the summary does not show — a re-highlighted copy of the summary is not a step diagram). If every step of this method is its own node in plan.md, draw only the summary with subroutine boxes and click links instead. Append the palette block from ${A.wiki_root}/그림/_palette.mmd (copy it there from ${A.mermaid_dir}/assets/_palette.mmd if missing). Write ${A.wiki_root}/그림/d-${n.file}-labels.md with its '## 원문 확인' table. Render each with '${A.mermaid_dir}/assets/render.sh <file>.mmd' and '... <file>.mmd <file>.png', open every PNG with Read, fix crossings / cut labels and rerender until clean. Run '${CHECK()} ${A.wiki_root}/그림/d-${n.file}-labels.md'.`)
+    if (wantExample) parts.push(`EXAMPLE FIGURE (③). Make one svg with wfig per references/figures.md "예시 그림 기준" (one valued example from the paper, shapes for right/wrong, terse labels).${FIGS === 'svg' ? ' Add step figures with build(steps=...).' : ' No step figures: build(steps={}, titles={0: ...}).'}
+Write ${A.wiki_root}/그림/make_w_${n.file}.py and ${A.wiki_root}/그림/w-${n.file}-labels.md (the '## 원문 확인' rows quote the paper page for each label that states a fact), run 'cd ${A.wiki_root}/그림 && python3 make_w_${n.file}.py', open the PNG with Read to check nothing overlaps or overflows, fix and rerun until clean.`)
+    parts.push(`Insert into the node right after the '**한 줄로:**' (or '**답:**') line: ${wantDiagram ? "the '**다이어그램:**' block (summary, a one-line reading guide, step diagrams in <details>)" : ''}${wantDiagram && wantExample ? ', then ' : ''}${wantExample ? "the '**예시 그림:**' block" : ''}, in the format figures.md gives. If the node already has a figure block, keep it and put the new block in the right place rather than duplicating.`)
+    const how = parts.join('\n\n')
     const f = await agent(`Add a figure to one paper-wiki node.${COMMON}
 
 Node: ${path(n)}
@@ -99,7 +107,7 @@ ${done.flatMap(r => (r.v ? r.v.unresolved : []).map(u => `- ${r.n.file}: ${u}`))
 1. index.md: under each type heading, list that type's nodes in plan.md order as '- [title](type/file.md) — one phrase'. Replace '(아직 없음)'. Keep existing entries.
 2. First appearance: for every node in the wiki, link the first mention of each other node's title or alias (one link per target per node — skip a target the node already links anywhere; remove a link that points to a node whose title/alias is not the linked word; not inside code blocks, quotes, headings, or the '## 원문' list).
 3. 용어.md: put a link to the node in the memo column of its row.
-4. ${A.figures === 'svg' ? `그림/README.md: one table row per figure (그림 | 넣은 노드 | 근거 쪽 | 다시 만들기 명령). Create the file if missing.` : 'No figure README.'}
+4. ${A.figures !== 'none' ? `그림/README.md: one table row per figure (그림 | 넣은 노드 | 근거 쪽 | 다시 만들기 명령), diagrams (d-*) and example figures (w-*) in separate tables. Create the file if missing.` : 'No figure README.'}
 5. log.md: append one line '- <today from \`date +%F\`>: wiki-from-paper — <N> nodes (<counts by type>)${A.figures !== 'none' ? ', figures ' + A.figures : ''}'.
 6. Run '${CHECK()}' (all nodes) and 'python3 ${A.wiki_kit_dir}/wiki-lint/scripts/wiki_lint.py ${A.wiki_root}'. Fix link/index problems you caused; report the rest.
 Do not change node content beyond adding links. Do not commit.
