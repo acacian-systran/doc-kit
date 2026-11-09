@@ -95,9 +95,11 @@ svg .edge.on .arw,svg .edge:hover .arw,svg .edge:focus-visible .arw{stroke-width
 svg .edge.on text,svg .edge:hover text{fill:var(--c-search);font-weight:700}
 svg .node.has-data:hover .tile,svg .node.on .tile{stroke:var(--hl-line);stroke-width:3.5}
 .xhint{font-size:13px}
-.xpanel{position:fixed;top:0;right:0;bottom:0;width:min(520px,100vw);z-index:20;background:var(--sheet);border-left:1px solid var(--line);
+.xpanel{position:fixed;top:0;right:0;bottom:0;width:min(520px,46vw);z-index:20;background:var(--sheet);border-left:1px solid var(--line);
   box-shadow:-8px 0 24px rgba(0,0,0,.12);padding:16px 18px 32px;overflow:auto;display:grid;gap:12px;align-content:start}
 .xpanel[hidden]{display:none}
+.xpanel.left{right:auto;left:0;border-left:0;border-right:1px solid var(--line);box-shadow:8px 0 24px rgba(0,0,0,.12)}
+.xpanel.left.pinned{border-left:0;border-right:3px solid var(--hl-line)}
 .xpanel.pinned{border-left:3px solid var(--hl-line)}
 .xhead{display:flex;justify-content:space-between;gap:12px;align-items:start;position:sticky;top:-16px;background:var(--sheet);padding:4px 0 8px;border-bottom:1px solid var(--line)}
 .xhead h3{margin:2px 0 0;font-size:17px}
@@ -111,8 +113,10 @@ svg .node.has-data:hover .tile,svg .node.on .tile{stroke:var(--hl-line);stroke-w
 .xit pre{margin:0;font:12px/1.5 var(--mono);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 10px;
   white-space:pre-wrap;overflow-wrap:anywhere;max-height:46vh;overflow:auto}
 .xnote{font-size:13px;color:var(--muted)}
-@media (max-width:720px){.xpanel{top:auto;left:0;width:100vw;height:62vh;border-left:0;border-top:1px solid var(--line)}}
+@media (max-width:720px){.xpanel,.xpanel.left{top:auto;left:0;right:0;width:100vw;height:62vh;border:0;border-top:1px solid var(--line)}}
 .xgo{display:inline-block;font:500 14px var(--sans);color:var(--c-search);border:1px solid var(--c-search);border-radius:6px;padding:6px 12px;text-decoration:none;width:max-content}
 .xgo:hover,.xgo:focus-visible{background:var(--c-search);color:#fff;outline:none}
 svg .node.drill .tile{stroke:var(--c-search);stroke-width:2.5;stroke-dasharray:5 3}
 .mode-color svg .node.drill .tile{stroke:#FFFFFF}
+nav.levels{display:grid;gap:2px;font-size:.88rem;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--sheet);width:max-content;max-width:100%}
+nav.levels a{color:var(--c-search)}

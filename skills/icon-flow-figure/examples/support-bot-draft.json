@@ -1,0 +1,254 @@
+{
+  "page": {
+    "title": "초안 · 검토 L1",
+    "eyebrow": "예시 · 가상 코드 support_bot.py · L1",
+    "lede": "L0 그림의 (f) Draft-LLM · (g) Review-LLM을 펼친 것. ticket T-1042. 가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md)."
+  },
+  "figure": {
+    "eyebrow": "그림 1-1 · 코드 기준",
+    "heading": "attempt 하나: 프롬프트 → 초안 → 검토 → 통과 · retry",
+    "viewBox": [
+      860,
+      380
+    ],
+    "desc": "Prompt를 받아 Draft-LLM이 초안, Review-LLM이 ok · fix · reject 판정. reject면 note를 붙여 retry, 통과하면 Policy check로.",
+    "legend": {
+      "x": 600,
+      "y": 40,
+      "col_w": 90,
+      "lines": {
+        "flow": "flow",
+        "read": "read"
+      }
+    },
+    "frames": [
+      {
+        "kind": "loop",
+        "x": 70,
+        "y": 130,
+        "w": 440,
+        "h": 190,
+        "label": "Attempt ≤ 3",
+        "at": [
+          420,
+          148
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "id": "p",
+        "x": 100,
+        "y": 40,
+        "role": "in",
+        "icon": "prompt",
+        "label": "Prompt",
+        "pos": "above",
+        "tip": "L0 (e)가 만든 프롬프트.",
+        "data": {
+          "title": "Prompt",
+          "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).",
+          "items": [
+            {
+              "h": "칸 머리",
+              "src": "runs/r1/T-1042/03_prompt.txt",
+              "body": "[TICKET]\n[CLASS]\n[FAQ]\n[HISTORY]\n[REVIEW NOTE]"
+            }
+          ]
+        }
+      },
+      {
+        "id": "a",
+        "badge": "a",
+        "x": 100,
+        "y": 180,
+        "role": "llm",
+        "icon": "gen",
+        "label": "Draft-LLM",
+        "tip": "(a) 초안 생성. 응답이 비면 바로 retry. support_bot.py:110",
+        "data": {
+          "title": "Draft-LLM 호출",
+          "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).",
+          "items": [
+            {
+              "h": "meta",
+              "src": "runs/r1/T-1042/04_draft_a1.meta.json",
+              "body": "{\"duration_s\": 4.1, \"output_tokens\": 212}"
+            }
+          ]
+        },
+        "pos": "below"
+      },
+      {
+        "id": "draft",
+        "x": 230,
+        "y": 180,
+        "role": "frag",
+        "icon": "doc",
+        "label": "Draft",
+        "tip": "초안 글.",
+        "data": {
+          "title": "초안",
+          "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).",
+          "items": [
+            {
+              "h": "04_draft_a1.txt",
+              "src": "runs/r1/T-1042/04_draft_a1.txt",
+              "body": "안녕하세요. 이중 결제된 늦은 건(9,900원)을 3영업일 안에 취소해 드립니다."
+            }
+          ]
+        },
+        "pos": "above"
+      },
+      {
+        "id": "b",
+        "badge": "b",
+        "x": 360,
+        "y": 180,
+        "role": "llm",
+        "icon": "judge",
+        "label": "Review-LLM",
+        "tip": "(b) ok · fix · reject 판정. support_bot.py:126",
+        "data": {
+          "title": "판정",
+          "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).",
+          "items": [
+            {
+              "h": "05_review_a1.json",
+              "src": "runs/r1/T-1042/05_review_a1.json",
+              "body": "{\"decision\": \"ok\", \"notes\": []}"
+            }
+          ]
+        },
+        "pos": "above"
+      },
+      {
+        "id": "out",
+        "x": 600,
+        "y": 180,
+        "role": "out",
+        "icon": "shield",
+        "label": "Policy check",
+        "tip": "L0 (h)로. 두 번 누르면 L0.",
+        "data": {
+          "title": "L0으로",
+          "href": "index.html",
+          "href_label": "L0 전체로 돌아가기",
+          "items": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "p",
+        "to": "a",
+        "data": {
+          "title": "프롬프트 전문",
+          "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).",
+          "items": [
+            {
+              "h": "03_prompt.txt",
+              "src": "runs/r1/T-1042/03_prompt.txt",
+              "body": "[TICKET]\n{\"id\": \"T-1042\", \"received\": \"2026-11-09T09:12\", \"title\": \"환불이 두 번 결제됐어요\", \"body\": \"어제 결제한 요금제가 두 번 빠져나갔습니다. 하나 환불 부탁드립니다.\"}\n…"
+            }
+          ]
+        }
+      },
+      {
+        "from": "a",
+        "to": "draft"
+      },
+      {
+        "from": "draft",
+        "to": "b",
+        "data": {
+          "title": "검토에 넘기는 글",
+          "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).",
+          "items": [
+            {
+              "h": "초안",
+              "src": "runs/r1/T-1042/04_draft_a1.txt",
+              "body": "안녕하세요. 이중 결제된 늦은 건(9,900원)을 …"
+            }
+          ]
+        }
+      },
+      {
+        "from": "b",
+        "to": "out",
+        "label": "ok · fix",
+        "at": [
+          555,
+          202
+        ],
+        "lcls": "xs",
+        "data": {
+          "title": "통과한 초안",
+          "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).",
+          "items": [
+            {
+              "h": "05_review_a1.json",
+              "src": "runs/r1/T-1042/05_review_a1.json",
+              "body": "{\"decision\": \"ok\"}"
+            }
+          ]
+        }
+      },
+      {
+        "path": [
+          [
+            390,
+            240
+          ],
+          [
+            390,
+            290
+          ],
+          [
+            85,
+            290
+          ],
+          [
+            85,
+            210
+          ],
+          [
+            98,
+            210
+          ]
+        ],
+        "label": "reject → note → retry",
+        "at": [
+          240,
+          308
+        ],
+        "data": {
+          "title": "retry로 넘어가는 note",
+          "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).",
+          "items": [
+            {
+              "h": "예: 다른 ticket",
+              "src": "runs/r1/T-0998/05_review_a1.json",
+              "body": "{\"decision\": \"reject\", \"notes\": [\"환불 금액을 적지 않음\"]}",
+              "note": "T-1042는 retry 0회."
+            }
+          ]
+        }
+      }
+    ],
+    "caption": "Review-LLM이 fix면 고친 초안이 그대로 Policy check로 감."
+  },
+  "steps": {
+    "heading": "처리 단계 (a)–(b)",
+    "items": [
+      {
+        "k": "a",
+        "text": "Prompt로 초안 생성"
+      },
+      {
+        "k": "b",
+        "text": "초안 판정. reject면 note를 붙여 (a)로"
+      }
+    ]
+  }
+}

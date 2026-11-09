@@ -1,0 +1,17 @@
+{
+  "out": "site",
+  "pages": [
+    {
+      "file": "index.html",
+      "spec": "support-bot.json",
+      "name": "L0 ticket 처리 전체",
+      "depth": 0
+    },
+    {
+      "file": "support-bot-draft.html",
+      "spec": "support-bot-draft.json",
+      "name": "L1 초안 · 검토",
+      "depth": 1
+    }
+  ]
+}

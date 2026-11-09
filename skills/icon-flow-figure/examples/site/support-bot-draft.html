@@ -1,0 +1,216 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>초안 · 검토 L1</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>/* icon-flow-figure 페이지 스타일. build.py 가 인라인한다. 색 이름은 역할(role)이고 references/layout.md 표와 같다. */
+:root{
+  --paper:#F3F4F2; --sheet:#FFFFFF; --ink:#22262B; --muted:#66707A; --line:#C6CBD0;
+  --c-in:#2E7D84; --c-rule:#56657A; --c-search:#2C61B0; --c-llm:#7140B5; --c-merge:#BF6516; --c-out:#3A853D; --c-frag:#A07FD0;
+  --bw-llm:#DADDE1; --band:#4E6377; --badge:#1B1E22; --badge-fg:#FFFFFF; --hl:#FFF3D6; --hl-line:#E0A93B;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#15181C; --sheet:#1D2126; --ink:#E5E8EB; --muted:#9AA3AD; --line:#3B424A;
+  --bw-llm:#3A4048; --band:#9FB4C8; --badge:#E5E8EB; --badge-fg:#15181C; --hl:#3A3220; --hl-line:#C99A3A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#15181C; --sheet:#1D2126; --ink:#E5E8EB; --muted:#9AA3AD; --line:#3B424A;
+  --bw-llm:#3A4048; --band:#9FB4C8; --badge:#E5E8EB; --badge-fg:#15181C; --hl:#3A3220; --hl-line:#C99A3A; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+.wrap{max-width:1240px;margin:0 auto;padding:40px 16px 64px;display:grid;gap:40px}
+header{display:grid;gap:10px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+h1{font-size:28px;margin:0;text-wrap:balance}
+h2{font-size:21px;margin:0;text-wrap:balance}
+h3{font-size:15px;margin:0 0 8px}
+p{margin:0;max-width:75ch}
+.lede{color:var(--muted)}
+section{display:grid;gap:16px}
+ul,ol{margin:0;padding-left:20px;display:grid;gap:6px}
+code{font-family:var(--mono);font-size:.88em;background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.verdict{background:var(--hl);border-left:4px solid var(--hl-line);border-radius:6px;padding:14px 18px;display:grid;gap:8px}
+.verdict strong{font-size:16px}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;width:max-content}
+.toggle button{font:500 13px var(--sans);padding:7px 14px;border:0;background:var(--sheet);color:var(--muted);cursor:pointer}
+.toggle button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.toggle button:focus-visible{outline:2px solid var(--c-search);outline-offset:-2px}
+.fig{background:var(--sheet);border:1px solid var(--line);border-radius:6px;overflow-x:auto;padding:12px}
+.fig svg{display:block;min-width:760px;max-width:1000px;margin:0 auto;width:100%;height:auto}
+.num{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 3px;border-radius:10px;background:var(--badge);color:var(--badge-fg);font:700 12px var(--sans);margin-right:6px;vertical-align:1px}
+.steps{list-style:none;padding-left:0;gap:10px}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:4px 6px}
+.steps .ref{grid-column:2;font-size:13px;color:var(--muted)}
+.notes .dot{width:8px;height:8px;border-radius:4px;background:var(--muted);margin:9px 0 0 6px}
+table.diff{border-collapse:collapse;width:100%;font-size:14px;background:var(--sheet)}
+table.diff th,table.diff td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+table.diff th{font-size:13px;color:var(--muted);font-weight:500}
+table.mt{border-collapse:collapse;font-size:13px;background:var(--sheet);min-width:760px;width:100%}
+table.mt th,table.mt td{border:1px solid var(--line);padding:6px 6px;text-align:center}
+table.mt thead th{font-weight:500;color:var(--muted);font-size:12px;line-height:1.3}
+table.mt .mk{display:block;font-family:var(--mono)}
+table.mt tbody th{text-align:left;white-space:nowrap}
+table.mt td.full{color:var(--c-llm);font-size:16px}
+table.mt td.part{color:var(--c-llm);font-size:16px;opacity:.6;cursor:help}
+.mode-bw table.mt td{color:var(--ink)}
+.tw{overflow-x:auto}
+
+svg text{font-family:var(--sans);fill:var(--ink)}
+svg .t{font-size:14px;font-weight:700}
+svg .s{font-size:12px;fill:var(--muted)}
+svg .xs{font-size:10.5px;fill:var(--muted)}
+svg .m{font-size:11.5px;fill:var(--muted);font-family:var(--mono)}
+svg .frame{fill:none;stroke:var(--muted);stroke-width:1.3;stroke-dasharray:6 4}
+svg .frame-solid{fill:none;stroke:var(--c-search);stroke-width:1.5}
+svg .ar{stroke:var(--ink);stroke-width:1.5;fill:none}
+svg .ar2{stroke:var(--muted);stroke-width:1.3;fill:none;stroke-dasharray:4 3}
+svg .arw{stroke:var(--c-merge);stroke-width:2.2;fill:none}
+svg .loop{stroke-width:2.4}
+svg .badge circle{fill:var(--badge);stroke:var(--sheet);stroke-width:2}
+svg .badge text{fill:var(--badge-fg);font-size:11px;font-weight:700}
+svg .glyph{color:#FFFFFF}
+svg .node{outline:none}
+svg .node:focus-visible .tile,svg .node:focus-visible .dec{stroke:var(--c-search);stroke-width:3}
+svg .dec{fill:var(--sheet);stroke:var(--ink);stroke-width:1.6}
+svg .hlt{fill:var(--hl-line);font-weight:700;font-size:12.5px}
+svg .bandtxt{fill:#FFFFFF}
+
+.mode-color .tile{stroke:none}
+.mode-color .r-in{fill:var(--c-in)} .mode-color .r-rule{fill:var(--c-rule)}
+.mode-color .r-search{fill:var(--c-search)} .mode-color .r-llm{fill:var(--c-llm)}
+.mode-color .r-merge{fill:var(--c-merge)} .mode-color .r-out{fill:var(--c-out)} .mode-color .r-frag{fill:var(--c-frag)}
+
+.mode-bw .tile{fill:var(--sheet);stroke:var(--ink);stroke-width:1.5}
+.mode-bw .tile.r-llm{fill:var(--bw-llm)}
+.mode-bw .tile.r-in{stroke-dasharray:5 3}
+.mode-bw .glyph{color:var(--ink)}
+.mode-bw svg .frame-solid{stroke:var(--ink)}
+.mode-bw svg .arw{stroke:var(--ink)}
+.mode-bw svg .bandtxt{fill:var(--ink)}
+.mode-bw svg .hlt{fill:var(--ink)}
+
+/* 노드 · 간선 data 칸 (spec 의 nodes[].data · edges[].data 가 있을 때만) */
+svg .has-data{cursor:pointer;outline:none}
+svg .hit{stroke:transparent;stroke-width:14;fill:none;pointer-events:stroke}
+svg .edge.on .ar,svg .edge:hover .ar,svg .edge:focus-visible .ar{stroke:var(--c-search);stroke-width:3}
+svg .edge.on .ar2,svg .edge:hover .ar2,svg .edge:focus-visible .ar2{stroke:var(--c-search);stroke-width:2.6}
+svg .edge.on .arw,svg .edge:hover .arw,svg .edge:focus-visible .arw{stroke-width:3.6}
+svg .edge.on text,svg .edge:hover text{fill:var(--c-search);font-weight:700}
+svg .node.has-data:hover .tile,svg .node.on .tile{stroke:var(--hl-line);stroke-width:3.5}
+.xhint{font-size:13px}
+.xpanel{position:fixed;top:0;right:0;bottom:0;width:min(520px,46vw);z-index:20;background:var(--sheet);border-left:1px solid var(--line);
+  box-shadow:-8px 0 24px rgba(0,0,0,.12);padding:16px 18px 32px;overflow:auto;display:grid;gap:12px;align-content:start}
+.xpanel[hidden]{display:none}
+.xpanel.left{right:auto;left:0;border-left:0;border-right:1px solid var(--line);box-shadow:8px 0 24px rgba(0,0,0,.12)}
+.xpanel.left.pinned{border-left:0;border-right:3px solid var(--hl-line)}
+.xpanel.pinned{border-left:3px solid var(--hl-line)}
+.xhead{display:flex;justify-content:space-between;gap:12px;align-items:start;position:sticky;top:-16px;background:var(--sheet);padding:4px 0 8px;border-bottom:1px solid var(--line)}
+.xhead h3{margin:2px 0 0;font-size:17px}
+#xclose{font:500 20px var(--sans);line-height:1;border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:6px;width:32px;height:32px;cursor:pointer}
+#xclose:focus-visible{outline:2px solid var(--c-search)}
+#xbody{display:grid;gap:14px}
+.xlede{color:var(--muted);font-size:14px}
+.xit{display:grid;gap:4px}
+.xit h4{margin:0;font-size:14px}
+.xsrc{font-family:var(--mono);font-size:11.5px;color:var(--muted);overflow-wrap:anywhere}
+.xit pre{margin:0;font:12px/1.5 var(--mono);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 10px;
+  white-space:pre-wrap;overflow-wrap:anywhere;max-height:46vh;overflow:auto}
+.xnote{font-size:13px;color:var(--muted)}
+@media (max-width:720px){.xpanel,.xpanel.left{top:auto;left:0;right:0;width:100vw;height:62vh;border:0;border-top:1px solid var(--line)}}
+.xgo{display:inline-block;font:500 14px var(--sans);color:var(--c-search);border:1px solid var(--c-search);border-radius:6px;padding:6px 12px;text-decoration:none;width:max-content}
+.xgo:hover,.xgo:focus-visible{background:var(--c-search);color:#fff;outline:none}
+svg .node.drill .tile{stroke:var(--c-search);stroke-width:2.5;stroke-dasharray:5 3}
+.mode-color svg .node.drill .tile{stroke:#FFFFFF}
+nav.levels{display:grid;gap:2px;font-size:.88rem;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--sheet);width:max-content;max-width:100%}
+nav.levels a{color:var(--c-search)}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker><marker id="ahm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker><marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker><symbol id="i-doc" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h11l6 6v18H8z"/><path d="M19 4v6h6"/><path d="M12 16h9M12 20h9M12 24h6"/></g></symbol><symbol id="i-gen" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16" rx="2"/><path d="M12 4v4M20 4v4M12 24v4M20 24v4M4 12h4M4 20h4M24 12h4M24 20h4"/><path d="M16 11.5l1.2 3.3 3.3 1.2-3.3 1.2-1.2 3.3-1.2-3.3-3.3-1.2 3.3-1.2z" fill="currentColor" stroke-width="1"/></g></symbol><symbol id="i-judge" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16" rx="2"/><path d="M12 4v4M20 4v4M12 24v4M20 24v4M4 12h4M4 20h4M24 12h4M24 20h4"/><path d="M12.5 16l2.5 2.6 4.5-5"/></g></symbol><symbol id="i-prompt" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h22v16H14l-6 5v-5H5z"/><path d="M10 12h12M10 17h8"/></g></symbol><symbol id="i-shield" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4l10 4v7c0 7-4.5 11-10 13-5.5-2-10-6-10-13V8z"/><path d="M11.5 16l3 3 6-6.5"/></g></symbol></defs></svg>
+<div class="wrap mode-color" id="root"><header><nav class="levels" aria-label="레벨"><a style="margin-left:0px" href="index.html">L0 ticket 처리 전체</a><b style="margin-left:14px" aria-current="page">└ L1 초안 · 검토</b></nav>
+<div class="eyebrow">예시 · 가상 코드 support_bot.py · L1</div>
+<h1>초안 · 검토 L1</h1>
+<p class="lede">L0 그림의 (f) Draft-LLM · (g) Review-LLM을 펼친 것. ticket T-1042. 가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).</p>
+<div class="toggle" role="group" aria-label="표시 방식"><button type="button" id="m-color" aria-pressed="true">덱용 색</button><button type="button" id="m-bw" aria-pressed="false">논문용 흑백</button></div>
+</header>
+<section>
+<div class="eyebrow">그림 1-1 · 코드 기준</div>
+<h2>attempt 하나: 프롬프트 → 초안 → 검토 → 통과 · retry</h2>
+<div class="fig"><svg viewBox="0 0 860 380" role="img" aria-labelledby="fig-t">
+<title id="fig-t">Prompt를 받아 Draft-LLM이 초안, Review-LLM이 ok · fix · reject 판정. reject면 note를 붙여 retry, 통과하면 Policy check로.</title>
+<g aria-label="legend"><rect class="tile r-in" x="600" y="40" width="14" height="14" rx="3"/><text class="s" x="620" y="52">Input</text><rect class="tile r-llm" x="690" y="40" width="14" height="14" rx="3"/><text class="s" x="710" y="52">LLM</text><rect class="tile r-out" x="780" y="40" width="14" height="14" rx="3"/><text class="s" x="800" y="52">Output</text><rect class="tile r-frag" x="600" y="64" width="14" height="14" rx="3"/><text class="s" x="620" y="76">Fragment</text><path class="ar" d="M600,97 H622" marker-end="url(#ah)"/><text class="s" x="628" y="101">flow</text><path class="ar2" d="M690,97 H712" marker-end="url(#ahm)"/><text class="s" x="718" y="101">read</text></g>
+<rect class="frame" x="70" y="130" width="440" height="190" rx="8"/><text class="m" x="420" y="148">Attempt ≤ 3</text>
+<g class="edge has-data" tabindex="0" role="button" data-x="e0" aria-label="프롬프트 전문"><path class="hit" d="M130,100 V178"/><path class="ar" d="M130,100 V178" marker-end="url(#ah)"/></g>
+<path class="ar" d="M160,210 H228" marker-end="url(#ah)"/>
+<g class="edge has-data" tabindex="0" role="button" data-x="e2" aria-label="검토에 넘기는 글"><path class="hit" d="M290,210 H358"/><path class="ar" d="M290,210 H358" marker-end="url(#ah)"/></g>
+<g class="edge has-data" tabindex="0" role="button" data-x="e3" aria-label="통과한 초안"><path class="hit" d="M420,210 H598"/><path class="ar" d="M420,210 H598" marker-end="url(#ah)"/><text class="xs" x="555" y="202">ok · fix</text></g>
+<g class="edge has-data" tabindex="0" role="button" data-x="e4" aria-label="retry로 넘어가는 note"><path class="hit" d="M390,240 V290 H85 V210 H98"/><path class="ar" d="M390,240 V290 H85 V210 H98" marker-end="url(#ah)"/><text class="s" x="240" y="308">reject → note → retry</text></g>
+<g class="node has-data" role="button" data-x="n-p" tabindex="0" data-id="p"><title>L0 (e)가 만든 프롬프트.</title><rect class="tile r-in" x="100" y="40" width="60" height="60" rx="8"/><use href="#i-prompt" class="glyph" x="112" y="52" width="36" height="36"/><text class="t" x="130" y="28" text-anchor="middle">Prompt</text></g>
+<g class="node has-data" role="button" data-x="n-a" tabindex="0" data-id="a"><title>(a) 초안 생성. 응답이 비면 바로 retry. support_bot.py:110</title><rect class="tile r-llm" x="100" y="180" width="60" height="60" rx="8"/><use href="#i-gen" class="glyph" x="112" y="192" width="36" height="36"/><text class="t" x="130" y="260" text-anchor="middle">Draft-LLM</text></g>
+<g class="node has-data" role="button" data-x="n-draft" tabindex="0" data-id="draft"><title>초안 글.</title><rect class="tile r-frag" x="230" y="180" width="60" height="60" rx="8"/><use href="#i-doc" class="glyph" x="242" y="192" width="36" height="36"/><text class="t" x="260" y="168" text-anchor="middle">Draft</text></g>
+<g class="node has-data" role="button" data-x="n-b" tabindex="0" data-id="b"><title>(b) ok · fix · reject 판정. support_bot.py:126</title><rect class="tile r-llm" x="360" y="180" width="60" height="60" rx="8"/><use href="#i-judge" class="glyph" x="372" y="192" width="36" height="36"/><text class="t" x="390" y="168" text-anchor="middle">Review-LLM</text></g>
+<g class="node has-data" role="button" data-x="n-out" tabindex="0" data-id="out"><title>L0 (h)로. 두 번 누르면 L0.</title><rect class="tile r-out" x="600" y="180" width="60" height="60" rx="8"/><use href="#i-shield" class="glyph" x="612" y="192" width="36" height="36"/><text class="t" x="630" y="260" text-anchor="middle">Policy check</text></g>
+<g class="badge"><circle cx="100" cy="180" r="12"/><text x="100" y="184.5" text-anchor="middle">a</text></g>
+<g class="badge"><circle cx="360" cy="180" r="12"/><text x="360" y="184.5" text-anchor="middle">b</text></g>
+</svg></div>
+<p class="lede xhint">타일을 누르면 저장된 형태, 선(또는 선 라벨)을 누르면 주고받는 데이터가 오른쪽에 나옴. 마우스를 올리면 미리 보기, 누르면 고정, Esc로 닫기.</p>
+<p class="lede">Review-LLM이 fix면 고친 초안이 그대로 Policy check로 감.</p>
+</section>
+<section><h2>처리 단계 (a)–(b)</h2><ol class="steps"><li><span class="num">a</span><span>Prompt로 초안 생성</span></li><li><span class="num">b</span><span>초안 판정. reject면 note를 붙여 (a)로</span></li></ol></section>
+</div>
+<aside class="xpanel" id="xpanel" hidden aria-live="polite"><div class="xhead"><div><div class="eyebrow" id="xkind"></div><h3 id="xtitle"></h3></div><button type="button" id="xclose" aria-label="닫기">×</button></div><div id="xbody"></div></aside><script type="application/json" id="xdata">{"n-p": {"title": "Prompt", "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).", "items": [{"h": "칸 머리", "src": "runs/r1/T-1042/03_prompt.txt", "body": "[TICKET]\n[CLASS]\n[FAQ]\n[HISTORY]\n[REVIEW NOTE]"}]}, "n-a": {"title": "Draft-LLM 호출", "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).", "items": [{"h": "meta", "src": "runs/r1/T-1042/04_draft_a1.meta.json", "body": "{\"duration_s\": 4.1, \"output_tokens\": 212}"}]}, "n-draft": {"title": "초안", "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).", "items": [{"h": "04_draft_a1.txt", "src": "runs/r1/T-1042/04_draft_a1.txt", "body": "안녕하세요. 이중 결제된 늦은 건(9,900원)을 3영업일 안에 취소해 드립니다."}]}, "n-b": {"title": "판정", "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).", "items": [{"h": "05_review_a1.json", "src": "runs/r1/T-1042/05_review_a1.json", "body": "{\"decision\": \"ok\", \"notes\": []}"}]}, "n-out": {"title": "L0으로", "href": "index.html", "href_label": "L0 전체로 돌아가기", "items": []}, "e0": {"title": "프롬프트 전문", "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).", "items": [{"h": "03_prompt.txt", "src": "runs/r1/T-1042/03_prompt.txt", "body": "[TICKET]\n{\"id\": \"T-1042\", \"received\": \"2026-11-09T09:12\", \"title\": \"환불이 두 번 결제됐어요\", \"body\": \"어제 결제한 요금제가 두 번 빠져나갔습니다. 하나 환불 부탁드립니다.\"}\n…"}]}, "e2": {"title": "검토에 넘기는 글", "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).", "items": [{"h": "초안", "src": "runs/r1/T-1042/04_draft_a1.txt", "body": "안녕하세요. 이중 결제된 늦은 건(9,900원)을 …"}]}, "e3": {"title": "통과한 초안", "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).", "items": [{"h": "05_review_a1.json", "src": "runs/r1/T-1042/05_review_a1.json", "body": "{\"decision\": \"ok\"}"}]}, "e4": {"title": "retry로 넘어가는 note", "lede": "가상 예시 — 값은 지어낸 것. 실제 그림에서는 실행 기록 파일에서 스크립트로 뽑는다(references/data.md).", "items": [{"h": "예: 다른 ticket", "src": "runs/r1/T-0998/05_review_a1.json", "body": "{\"decision\": \"reject\", \"notes\": [\"환불 금액을 적지 않음\"]}", "note": "T-1042는 retry 0회."}]}}</script><script>
+(function(){
+  var src=document.getElementById('xdata'); if(!src) return;
+  var X=JSON.parse(src.textContent), P=document.getElementById('xpanel'), B=document.getElementById('xbody'),
+      T=document.getElementById('xtitle'), K=document.getElementById('xkind'), pinned=null, cur=null;
+  function el(t,c,s){var e=document.createElement(t); if(c) e.className=c; if(s!=null) e.textContent=s; return e}
+  function show(g){
+    var d=X[g.dataset.x]; if(!d) return;
+    if(cur) cur.classList.remove('on'); cur=g; g.classList.add('on');
+    K.textContent=d.kind||(g.classList.contains('edge')?'주고받는 데이터':'저장된 형태');
+    T.textContent=d.title||''; B.textContent='';
+    if(d.href){ var a=el('a','xgo',(d.href_label||'이 단계 그림으로 들어가기')+' →'); a.href=d.href; B.appendChild(a); }
+    if(d.lede) B.appendChild(el('p','xlede',d.lede));
+    (d.items||[]).forEach(function(it){
+      var s=el('section','xit'); if(it.h) s.appendChild(el('h4',null,it.h));
+      if(it.src) s.appendChild(el('div','xsrc',it.src));
+      if(it.body!=null) s.appendChild(el('pre',null,it.body));
+      if(it.note) s.appendChild(el('p','xnote',it.note));
+      B.appendChild(s);
+    });
+    // 칸이 누른 타일을 덮지 않게 반대쪽에 연다(덮으면 두 번 누르기의 두 번째가 칸에 떨어지고, hover 가 깜빡임)
+    var r=g.getBoundingClientRect(); P.classList.toggle('left',(r.left+r.right)/2>window.innerWidth/2);
+    P.hidden=false; P.classList.toggle('pinned',!!pinned);
+  }
+  function hide(){ if(cur) cur.classList.remove('on'); cur=null; pinned=null; P.hidden=true }
+  document.querySelectorAll('.has-data').forEach(function(g){
+    g.addEventListener('mouseenter',function(){ if(!pinned) show(g) });
+    g.addEventListener('mouseleave',function(){ if(!pinned) hide() });
+    g.addEventListener('focus',function(){ if(!pinned) show(g) });
+    // 같은 타일을 다시 눌러도 닫지 않음 — 두 번 누르기(들어가기)가 누르기 두 번을 먼저 일으키기 때문. 닫기는 × · Esc · 빈 곳.
+    function pin(ev){ ev.preventDefault(); ev.stopPropagation(); pinned=g; show(g); }
+    g.addEventListener('click',pin);
+    g.addEventListener('dblclick',function(){ var d=X[g.dataset.x]; if(d&&d.href) location.href=d.href });
+    if(X[g.dataset.x]&&X[g.dataset.x].href) g.classList.add('drill');
+    g.addEventListener('keydown',function(ev){ if(ev.key==='Enter'||ev.key===' ') pin(ev) });
+  });
+  document.getElementById('xclose').addEventListener('click',hide);
+  document.addEventListener('click',function(ev){ if(pinned&&!P.contains(ev.target)&&!ev.target.closest('.has-data')) hide() });
+  document.addEventListener('keydown',function(ev){ if(ev.key==='Escape') hide() });
+})();
+</script>
+<script>
+(function(){
+  var root=document.getElementById('root'), bc=document.getElementById('m-color'), bb=document.getElementById('m-bw');
+  if(!bc) return;
+  var key='iff-mode-'+document.title;
+  function set(m){
+    root.classList.toggle('mode-color',m==='color'); root.classList.toggle('mode-bw',m==='bw');
+    bc.setAttribute('aria-pressed',m==='color'); bb.setAttribute('aria-pressed',m==='bw');
+    try{localStorage.setItem(key,m)}catch(e){}
+  }
+  bc.addEventListener('click',function(){set('color')}); bb.addEventListener('click',function(){set('bw')});
+  var q=(location.hash.match(/mode=(bw|color)/)||[])[1], saved=null;
+  try{saved=localStorage.getItem(key)}catch(e){}
+  set(q||saved||'color');
+})();
+</script></body></html>

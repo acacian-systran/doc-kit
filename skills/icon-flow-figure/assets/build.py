@@ -391,6 +391,8 @@ XJS = """
       if(it.note) s.appendChild(el('p','xnote',it.note));
       B.appendChild(s);
     });
+    // 칸이 누른 타일을 덮지 않게 반대쪽에 연다(덮으면 두 번 누르기의 두 번째가 칸에 떨어지고, hover 가 깜빡임)
+    var r=g.getBoundingClientRect(); P.classList.toggle('left',(r.left+r.right)/2>window.innerWidth/2);
     P.hidden=false; P.classList.toggle('pinned',!!pinned);
   }
   function hide(){ if(cur) cur.classList.remove('on'); cur=null; pinned=null; P.hidden=true }
@@ -423,7 +425,8 @@ def xdata(fig: dict) -> dict:
     return out
 
 
-def build(spec: dict) -> str:
+def build(spec: dict, nav: str = "") -> str:
+    """nav: 페이지 머리 맨 위에 넣을 HTML(여러 장을 묶을 때 site.py 가 레벨 목록을 넘김)."""
     page = spec.get("page", {})
     fig = spec["figure"]
     svg, icons = figure_svg(fig)
@@ -434,7 +437,7 @@ def build(spec: dict) -> str:
              f"<title>{esc(title)}</title>",
              '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">',
              f"<style>{css}</style></head><body>", defs_svg(icons),
-             '<div class="wrap mode-color" id="root"><header>']
+             '<div class="wrap mode-color" id="root"><header>' + nav]
     if page.get("eyebrow"):
         parts.append(f'<div class="eyebrow">{esc(page["eyebrow"])}</div>')
     parts.append(f"<h1>{esc(title)}</h1>")
