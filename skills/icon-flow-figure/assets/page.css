@@ -85,3 +85,30 @@ svg .bandtxt{fill:#FFFFFF}
 .mode-bw svg .arw{stroke:var(--ink)}
 .mode-bw svg .bandtxt{fill:var(--ink)}
 .mode-bw svg .hlt{fill:var(--ink)}
+
+/* 노드 · 간선 data 칸 (spec 의 nodes[].data · edges[].data 가 있을 때만) */
+svg .has-data{cursor:pointer;outline:none}
+svg .hit{stroke:transparent;stroke-width:14;fill:none;pointer-events:stroke}
+svg .edge.on .ar,svg .edge:hover .ar,svg .edge:focus-visible .ar{stroke:var(--c-search);stroke-width:3}
+svg .edge.on .ar2,svg .edge:hover .ar2,svg .edge:focus-visible .ar2{stroke:var(--c-search);stroke-width:2.6}
+svg .edge.on .arw,svg .edge:hover .arw,svg .edge:focus-visible .arw{stroke-width:3.6}
+svg .edge.on text,svg .edge:hover text{fill:var(--c-search);font-weight:700}
+svg .node.has-data:hover .tile,svg .node.on .tile{stroke:var(--hl-line);stroke-width:3.5}
+.xhint{font-size:13px}
+.xpanel{position:fixed;top:0;right:0;bottom:0;width:min(520px,100vw);z-index:20;background:var(--sheet);border-left:1px solid var(--line);
+  box-shadow:-8px 0 24px rgba(0,0,0,.12);padding:16px 18px 32px;overflow:auto;display:grid;gap:12px;align-content:start}
+.xpanel[hidden]{display:none}
+.xpanel.pinned{border-left:3px solid var(--hl-line)}
+.xhead{display:flex;justify-content:space-between;gap:12px;align-items:start;position:sticky;top:-16px;background:var(--sheet);padding:4px 0 8px;border-bottom:1px solid var(--line)}
+.xhead h3{margin:2px 0 0;font-size:17px}
+#xclose{font:500 20px var(--sans);line-height:1;border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:6px;width:32px;height:32px;cursor:pointer}
+#xclose:focus-visible{outline:2px solid var(--c-search)}
+#xbody{display:grid;gap:14px}
+.xlede{color:var(--muted);font-size:14px}
+.xit{display:grid;gap:4px}
+.xit h4{margin:0;font-size:14px}
+.xsrc{font-family:var(--mono);font-size:11.5px;color:var(--muted);overflow-wrap:anywhere}
+.xit pre{margin:0;font:12px/1.5 var(--mono);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 10px;
+  white-space:pre-wrap;overflow-wrap:anywhere;max-height:46vh;overflow:auto}
+.xnote{font-size:13px;color:var(--muted)}
+@media (max-width:720px){.xpanel{top:auto;left:0;width:100vw;height:62vh;border-left:0;border-top:1px solid var(--line)}}

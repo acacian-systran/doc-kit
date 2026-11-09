@@ -180,7 +180,8 @@ def node_svg(s: Shape) -> str:
     tip = f"<title>{esc(n['tip'])}</title>" if n.get("tip") else ""
     role = n.get("role", "rule")
     x0, y0, x1, y1 = s.box
-    parts = [f'<g class="node" tabindex="0" data-id="{esc(s.id)}">{tip}']
+    xd = f' has-data" role="button" data-x="n-{esc(s.id)}' if n.get("data") else ""
+    parts = [f'<g class="node{xd}" tabindex="0" data-id="{esc(s.id)}">{tip}']
     if s.kind == "decision":
         cx, cy = s.cx, s.cy
         parts.append(f'<path class="dec" d="M{num(x0)},{num(cy)} L{num(cx)},{num(y0)} L{num(x1)},{num(cy)} L{num(cx)},{num(y1)} Z"/>')
@@ -216,12 +217,17 @@ def badge_svg(s: Shape) -> str:
             f'<text x="{num(x)}" y="{num(y + 4.5)}" text-anchor="middle">{esc(b)}</text></g>')
 
 
-def edge_svg(e: dict, shapes: dict) -> str:
+def edge_svg(e: dict, shapes: dict, i: int = 0) -> str:
     kind = e.get("kind", "flow")
     pts = route(e, shapes)
     cls = EDGE_CLS[kind] + (" loop" if e.get("loop") else "")
     mark = "" if e.get("arrow") is False else f' marker-end="url(#{EDGE_MARK[kind]})"'
     out = [f'<path class="{cls}" d="{path_d(pts)}"{mark}/>']
+    if e.get("data"):  # 주고받는 데이터: 굵은 투명 선으로 누르기 쉽게, 그룹으로 묶어 Tab 으로도
+        out.insert(0, f'<path class="hit" d="{path_d(pts)}"/>')
+        name = e["data"].get("title", "")
+        out.insert(0, f'<g class="edge has-data" tabindex="0" role="button" data-x="e{i}" aria-label="{esc(name)}">')
+    close = "</g>" if e.get("data") else ""  # 선 라벨도 그룹 안 — 라벨을 눌러도 열린다
     if e.get("label"):
         if "at" in e:
             lx, ly = e["at"]
@@ -230,7 +236,7 @@ def edge_svg(e: dict, shapes: dict) -> str:
             lx, ly = ((x0 + x1) / 2, y0 - 8) if y0 == y1 else (x0 + 8, (y0 + y1) / 2)
         anchor = e.get("anchor", "middle" if "at" not in e and pts[0][1] == pts[1][1] else "start")
         out.append(text_el(lx, ly, e["label"], e.get("lcls", "hlt" if kind == "write" else "s"), anchor))
-    return "".join(out)
+    return "".join(out) + close
 
 
 def legend_svg(lg: dict, roles_used: list) -> str:
@@ -295,7 +301,7 @@ def figure_svg(fig: dict) -> tuple[str, set]:
         body.append(legend_svg(fig.get("legend") or {}, list(roles_used)))
     body += [frame_svg(f) for f in fig.get("frames", [])]
     # 간선을 먼저 그리고 타일을 위에 올린다 — 선 끝이 타일 밑으로 숨는다
-    body += [edge_svg(e, shapes) for e in fig.get("edges", [])]
+    body += [edge_svg(e, shapes, i) for i, e in enumerate(fig.get("edges", []))]
     body += [text_el(t["x"], t["y"], t["text"], t.get("cls", "s"), t.get("anchor"), t.get("style"))
              for t in fig.get("texts", [])]
     body += [node_svg(s) for s in shapes.values()]
@@ -364,6 +370,53 @@ JS = """
 })();
 """
 
+# 노드 · 간선 data: 마우스를 올리면 미리 보고, 누르면(Enter · Space) 고정. Esc · 닫기로 닫음.
+XJS = """
+(function(){
+  var src=document.getElementById('xdata'); if(!src) return;
+  var X=JSON.parse(src.textContent), P=document.getElementById('xpanel'), B=document.getElementById('xbody'),
+      T=document.getElementById('xtitle'), K=document.getElementById('xkind'), pinned=null, cur=null;
+  function el(t,c,s){var e=document.createElement(t); if(c) e.className=c; if(s!=null) e.textContent=s; return e}
+  function show(g){
+    var d=X[g.dataset.x]; if(!d) return;
+    if(cur) cur.classList.remove('on'); cur=g; g.classList.add('on');
+    K.textContent=d.kind||(g.classList.contains('edge')?'주고받는 데이터':'저장된 형태');
+    T.textContent=d.title||''; B.textContent='';
+    if(d.lede) B.appendChild(el('p','xlede',d.lede));
+    (d.items||[]).forEach(function(it){
+      var s=el('section','xit'); if(it.h) s.appendChild(el('h4',null,it.h));
+      if(it.src) s.appendChild(el('div','xsrc',it.src));
+      if(it.body!=null) s.appendChild(el('pre',null,it.body));
+      if(it.note) s.appendChild(el('p','xnote',it.note));
+      B.appendChild(s);
+    });
+    P.hidden=false; P.classList.toggle('pinned',!!pinned);
+  }
+  function hide(){ if(cur) cur.classList.remove('on'); cur=null; pinned=null; P.hidden=true }
+  document.querySelectorAll('.has-data').forEach(function(g){
+    g.addEventListener('mouseenter',function(){ if(!pinned) show(g) });
+    g.addEventListener('mouseleave',function(){ if(!pinned) hide() });
+    g.addEventListener('focus',function(){ if(!pinned) show(g) });
+    function pin(ev){ ev.preventDefault(); if(pinned===g){hide();return} pinned=g; show(g); }
+    g.addEventListener('click',pin);
+    g.addEventListener('keydown',function(ev){ if(ev.key==='Enter'||ev.key===' ') pin(ev) });
+  });
+  document.getElementById('xclose').addEventListener('click',hide);
+  document.addEventListener('keydown',function(ev){ if(ev.key==='Escape') hide() });
+})();
+"""
+
+
+def xdata(fig: dict) -> dict:
+    out = {}
+    for n in fig.get("nodes", []):
+        if n.get("data"):
+            out[f"n-{n['id']}"] = n["data"]
+    for i, e in enumerate(fig.get("edges", [])):
+        if e.get("data"):
+            out[f"e{i}"] = e["data"]
+    return out
+
 
 def build(spec: dict) -> str:
     page = spec.get("page", {})
@@ -396,6 +449,10 @@ def build(spec: dict) -> str:
     if fig.get("heading"):
         parts.append(f"<h2>{esc(fig['heading'])}</h2>")
     parts.append(f'<div class="fig">{svg}</div>')
+    xd = xdata(fig)
+    if xd:
+        parts.append('<p class="lede xhint">타일을 누르면 저장된 형태, 선(또는 선 라벨)을 누르면 주고받는 데이터가 오른쪽에 나옴. '
+                     '마우스를 올리면 미리 보기, 누르면 고정, Esc로 닫기.</p>')
     if fig.get("caption"):
         parts.append(f'<p class="lede">{md(fig["caption"])}</p>')
     if spec.get("matrix"):
@@ -407,7 +464,14 @@ def build(spec: dict) -> str:
         parts.append(notes_html(spec["notes"]))
     if spec.get("diff"):
         parts.append(diff_html(spec["diff"]))
-    parts.append(f"</div><script>{JS}</script></body></html>")
+    parts.append("</div>")
+    if xd:
+        blob = json.dumps(xd, ensure_ascii=False).replace("</", "<\\/")
+        parts.append('<aside class="xpanel" id="xpanel" hidden aria-live="polite"><div class="xhead">'
+                     '<div><div class="eyebrow" id="xkind"></div><h3 id="xtitle"></h3></div>'
+                     '<button type="button" id="xclose" aria-label="닫기">×</button></div><div id="xbody"></div></aside>'
+                     f'<script type="application/json" id="xdata">{blob}</script><script>{XJS}</script>')
+    parts.append(f"<script>{JS}</script></body></html>")
     return "\n".join(parts)
 
 
