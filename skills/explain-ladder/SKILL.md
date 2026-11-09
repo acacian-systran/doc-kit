@@ -114,6 +114,7 @@ writing 에서 시작해 상위 포맷을 제안했고 사용자가 수락하면
 |---|---|
 | PR 설명을 **HTML 문서**로 원한다고 명시 | `explain-diff-html` |
 | 문서에 넣을 정식 다이어그램(.mmd 파일, 팔레트, SVG 렌더) | `mermaid-diagram` |
+| 덱 · 논문 · 리뷰용 한 장 흐름 그림(손으로 배치한 아이콘 타일), 그림이 코드와 맞는지 대조 | `icon-flow-figure` |
 | 논문 해설 | `paper-tutor`, `paper-explainer` |
 
-이 스킬의 diagram 포맷은 응답 안에 바로 넣는 검토용 그림이다. 파일로 남길 정식 도해는 `mermaid-diagram` 이 맡는다.
+이 스킬의 diagram 포맷은 응답 안에 바로 넣는 검토용 그림이다. 파일로 남길 정식 도해는 문서 안 소스면 `mermaid-diagram`, 한 장으로 내놓는 그림이면 `icon-flow-figure` 가 맡는다.

@@ -54,6 +54,22 @@ skills/
 `book-reader` 는 Node 의존성이 있어 처음 한 번 `npm ci --prefix skills/book-reader/assets` 가 필요하다.
 `reading-vocab` · `paper-explainer` 는 `paper-tutor` 의 `pdftext.py` 를 함께 쓰므로 두 스킬을 같이 설치한다.
 
+### 그림 스킬 고르기
+
+그림을 만드는 스킬이 여럿이다. 두 질문으로 고른다.
+
+1. 지금 채팅에서 이해하려는 그림인가, 파일로 남길 그림인가? → 채팅이면 `explain-ladder`, 파일이면 2번으로.
+2. 문서 안 소스로 두고 계속 고치나, 한 장으로 내놓나? → 소스면 `mermaid-diagram`, 한 장이면 `icon-flow-figure`.
+
+| 원하는 것 | 스킬 | 배치 | 그림의 근거 |
+|---|---|---|---|
+| 문서 안 구조도 · 순서도 · 상태도 · ERD (+ 뷰어 · 읽는 법 · 재생) | `mermaid-diagram` | 자동 | 설계 · 구조, 재생은 실제 run 값 |
+| 덱 · 논문 · 리뷰용 한 장 흐름 그림, 코드와 대조 | `icon-flow-figure` | 손으로 | 코드 실행 순서(`file:line`) |
+| 답하면서 바로 보여 줄 검토용 그림 | `explain-ladder` | 자동 | 그때 조사한 내용 |
+| 기법 여러 개의 구조도를 나란히 비교 | `method-atlas` | 엔진 | 논문 · 문서 |
+| 논문 논증 흐름(미니맵) | `paper-explainer` | 엔진 | 논문 |
+| 논문 위키 노드 그림 | `wiki-from-paper` | 자동 | 논문 쪽 앵커 |
+
 ## 설치
 
 `install.sh` 가 `skills/` 를 훑어 SKILL.md를 담은 디렉터리만 골라 링크한다. 번들이 몇

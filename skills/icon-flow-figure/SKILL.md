@@ -1,6 +1,6 @@
 ---
 name: icon-flow-figure
-description: Draw a hand-placed process figure in the AWS-architecture style — rounded icon tiles whose colour is the step's role (input · rule-based · retrieval · LLM · integrate · output), lettered circles (a)–(n) in execution order, a dashed loop frame for the repeated part, a band in the middle for state that accumulates across iterations with thick write arrows into it and dashed read arrows out, a decision diamond, and retry lines under the bottom row — grounded in the code the figure describes, not in memory or an earlier figure. Every tile carries a hover/focus tip saying what the code does there with file:line. The page around the figure adds a colour-for-slides / black-and-white-for-paper toggle (LLM steps are the only grey fill), a method × step matrix (● · ◐ · blank), the step list, code notes, a "differs from the earlier figure" table and, when asked to check something, a verdict box. Built from one spec JSON by a script; a checker catches tiles that overlap, labels that collide with lines, frames or other labels, lines that cut through tiles, and letters that skip or disagree with the step list; an exporter writes PNG and standalone SVG for decks and papers. Use whenever the user asks for 이런 그림 · 아이콘 그림 · 아이콘 타일 그림 · AWS 아키텍처 그림처럼 · 코드 기준 그림 · 코드대로 그림 다시 · 처리 흐름 그림 · 파이프라인 그림 덱용 · 논문용 흑백 그림 · 그림 A처럼, or shows such a figure (or an Artifact of one) and asks for another, or asks whether a figure matches the code. For auto-laid-out diagrams that live as source in docs (GitHub, Notion), use mermaid-diagram.
+description: Draw a hand-placed process figure in the AWS-architecture style — rounded icon tiles whose colour is the step's role (input · rule-based · retrieval · LLM · integrate · output), lettered circles (a)–(n) in execution order, a dashed loop frame for the repeated part, a band in the middle for state that accumulates across iterations with thick write arrows into it and dashed read arrows out, a decision diamond, and retry lines under the bottom row — grounded in the code the figure describes, not in memory or an earlier figure. Every tile carries a hover/focus tip saying what the code does there with file:line. The page around the figure adds a colour-for-slides / black-and-white-for-paper toggle (LLM steps are the only grey fill), a method × step matrix (● · ◐ · blank), the step list, code notes, a "differs from the earlier figure" table and, when asked to check something, a verdict box. Built from one spec JSON by a script; a checker catches tiles that overlap, labels that collide with lines, frames or other labels, lines that cut through tiles, and letters that skip or disagree with the step list; an exporter writes PNG and standalone SVG for decks and papers. Use whenever the user asks for 이런 그림 · 아이콘 그림 · 아이콘 타일 그림 · AWS 아키텍처 그림처럼 · 코드 기준 그림 · 코드대로 그림 다시 · 처리 흐름 그림 · 파이프라인 그림 덱용 · 논문용 흑백 그림 · 그림 A처럼, or shows such a figure (or an Artifact of one) and asks for another, or asks whether a figure matches the code. Deciding question: if the figure lives as source inside docs (GitHub, Notion) and is edited often with automatic layout — architecture, sequence, state, ER, or a viewer or playback over a diagram directory — use mermaid-diagram; if it is a quick picture inside a chat answer, use explain-ladder; use this skill when the figure is shown once as a finished page or image and its layout is placed by hand.
 ---
 
 # 아이콘 흐름 그림 (icon-flow-figure)
@@ -20,8 +20,13 @@ description: Draw a hand-placed process figure in the AWS-architecture style —
 | `assets/icons.svg` · `page.css` | 아이콘 묶음 · 페이지 스타일 |
 | `examples/support-bot.json` | 예시(가상 답변 봇). 처음 만들 때 이것을 복사 |
 
-`mermaid-diagram` 과 나누는 기준: 문서 안에 소스로 두고 자동 배치로 자주 고치는 그림은 Mermaid,
-덱 · 논문 · 리뷰에 한 장으로 내놓고 자리를 손으로 잡는 그림은 이 스킬.
+이웃 스킬과 나누는 기준(README 「그림 스킬 고르기」와 같음):
+
+| 그림 | 스킬 |
+|---|---|
+| 문서 안에 소스로 두고 자동 배치로 자주 고침(구조도 · 순서도 · 상태도 · ERD, 뷰어 · 재생) | `mermaid-diagram` |
+| 채팅 답 안에서 바로 보여 주는 검토용 | `explain-ladder` |
+| 덱 · 논문 · 리뷰에 한 장으로 내놓고 자리를 손으로 잡음, 코드와 대조 | 이 스킬 |
 
 ---
 
