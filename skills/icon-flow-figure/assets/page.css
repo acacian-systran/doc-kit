@@ -1,0 +1,87 @@
+/* icon-flow-figure 페이지 스타일. build.py 가 인라인한다. 색 이름은 역할(role)이고 references/layout.md 표와 같다. */
+:root{
+  --paper:#F3F4F2; --sheet:#FFFFFF; --ink:#22262B; --muted:#66707A; --line:#C6CBD0;
+  --c-in:#2E7D84; --c-rule:#56657A; --c-search:#2C61B0; --c-llm:#7140B5; --c-merge:#BF6516; --c-out:#3A853D; --c-frag:#A07FD0;
+  --bw-llm:#DADDE1; --band:#4E6377; --badge:#1B1E22; --badge-fg:#FFFFFF; --hl:#FFF3D6; --hl-line:#E0A93B;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#15181C; --sheet:#1D2126; --ink:#E5E8EB; --muted:#9AA3AD; --line:#3B424A;
+  --bw-llm:#3A4048; --band:#9FB4C8; --badge:#E5E8EB; --badge-fg:#15181C; --hl:#3A3220; --hl-line:#C99A3A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#15181C; --sheet:#1D2126; --ink:#E5E8EB; --muted:#9AA3AD; --line:#3B424A;
+  --bw-llm:#3A4048; --band:#9FB4C8; --badge:#E5E8EB; --badge-fg:#15181C; --hl:#3A3220; --hl-line:#C99A3A; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+.wrap{max-width:1240px;margin:0 auto;padding:40px 16px 64px;display:grid;gap:40px}
+header{display:grid;gap:10px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+h1{font-size:28px;margin:0;text-wrap:balance}
+h2{font-size:21px;margin:0;text-wrap:balance}
+h3{font-size:15px;margin:0 0 8px}
+p{margin:0;max-width:75ch}
+.lede{color:var(--muted)}
+section{display:grid;gap:16px}
+ul,ol{margin:0;padding-left:20px;display:grid;gap:6px}
+code{font-family:var(--mono);font-size:.88em;background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.verdict{background:var(--hl);border-left:4px solid var(--hl-line);border-radius:6px;padding:14px 18px;display:grid;gap:8px}
+.verdict strong{font-size:16px}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;width:max-content}
+.toggle button{font:500 13px var(--sans);padding:7px 14px;border:0;background:var(--sheet);color:var(--muted);cursor:pointer}
+.toggle button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.toggle button:focus-visible{outline:2px solid var(--c-search);outline-offset:-2px}
+.fig{background:var(--sheet);border:1px solid var(--line);border-radius:6px;overflow-x:auto;padding:12px}
+.fig svg{display:block;min-width:760px;max-width:1000px;margin:0 auto;width:100%;height:auto}
+.num{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 3px;border-radius:10px;background:var(--badge);color:var(--badge-fg);font:700 12px var(--sans);margin-right:6px;vertical-align:1px}
+.steps{list-style:none;padding-left:0;gap:10px}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:4px 6px}
+.steps .ref{grid-column:2;font-size:13px;color:var(--muted)}
+.notes .dot{width:8px;height:8px;border-radius:4px;background:var(--muted);margin:9px 0 0 6px}
+table.diff{border-collapse:collapse;width:100%;font-size:14px;background:var(--sheet)}
+table.diff th,table.diff td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+table.diff th{font-size:13px;color:var(--muted);font-weight:500}
+table.mt{border-collapse:collapse;font-size:13px;background:var(--sheet);min-width:760px;width:100%}
+table.mt th,table.mt td{border:1px solid var(--line);padding:6px 6px;text-align:center}
+table.mt thead th{font-weight:500;color:var(--muted);font-size:12px;line-height:1.3}
+table.mt .mk{display:block;font-family:var(--mono)}
+table.mt tbody th{text-align:left;white-space:nowrap}
+table.mt td.full{color:var(--c-llm);font-size:16px}
+table.mt td.part{color:var(--c-llm);font-size:16px;opacity:.6;cursor:help}
+.mode-bw table.mt td{color:var(--ink)}
+.tw{overflow-x:auto}
+
+svg text{font-family:var(--sans);fill:var(--ink)}
+svg .t{font-size:14px;font-weight:700}
+svg .s{font-size:12px;fill:var(--muted)}
+svg .xs{font-size:10.5px;fill:var(--muted)}
+svg .m{font-size:11.5px;fill:var(--muted);font-family:var(--mono)}
+svg .frame{fill:none;stroke:var(--muted);stroke-width:1.3;stroke-dasharray:6 4}
+svg .frame-solid{fill:none;stroke:var(--c-search);stroke-width:1.5}
+svg .ar{stroke:var(--ink);stroke-width:1.5;fill:none}
+svg .ar2{stroke:var(--muted);stroke-width:1.3;fill:none;stroke-dasharray:4 3}
+svg .arw{stroke:var(--c-merge);stroke-width:2.2;fill:none}
+svg .loop{stroke-width:2.4}
+svg .badge circle{fill:var(--badge);stroke:var(--sheet);stroke-width:2}
+svg .badge text{fill:var(--badge-fg);font-size:11px;font-weight:700}
+svg .glyph{color:#FFFFFF}
+svg .node{outline:none}
+svg .node:focus-visible .tile,svg .node:focus-visible .dec{stroke:var(--c-search);stroke-width:3}
+svg .dec{fill:var(--sheet);stroke:var(--ink);stroke-width:1.6}
+svg .hlt{fill:var(--hl-line);font-weight:700;font-size:12.5px}
+svg .bandtxt{fill:#FFFFFF}
+
+.mode-color .tile{stroke:none}
+.mode-color .r-in{fill:var(--c-in)} .mode-color .r-rule{fill:var(--c-rule)}
+.mode-color .r-search{fill:var(--c-search)} .mode-color .r-llm{fill:var(--c-llm)}
+.mode-color .r-merge{fill:var(--c-merge)} .mode-color .r-out{fill:var(--c-out)} .mode-color .r-frag{fill:var(--c-frag)}
+
+.mode-bw .tile{fill:var(--sheet);stroke:var(--ink);stroke-width:1.5}
+.mode-bw .tile.r-llm{fill:var(--bw-llm)}
+.mode-bw .tile.r-in{stroke-dasharray:5 3}
+.mode-bw .glyph{color:var(--ink)}
+.mode-bw svg .frame-solid{stroke:var(--ink)}
+.mode-bw svg .arw{stroke:var(--ink)}
+.mode-bw svg .bandtxt{fill:var(--ink)}
+.mode-bw svg .hlt{fill:var(--ink)}

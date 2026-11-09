@@ -1,0 +1,546 @@
+{
+  "page": {
+    "title": "답변 봇 처리 흐름",
+    "eyebrow": "예시 · 가상 코드 support_bot.py",
+    "lede": "가상의 고객 문의 답변 봇 `support_bot.py`의 `run()`이 도는 순서대로 그린 그림. 타일에 마우스를 올리거나 Tab으로 옮기면 그 단계가 코드에서 하는 일이 나옴. 코드 · 수치는 모두 가상."
+  },
+  "verdict": {
+    "head": "확인 결과: Reply log 검색은 이번 ticket의 답변을 보지 못함.",
+    "body": "(i) Save reply가 (d) 검색보다 뒤에 있으므로, (d)는 앞 ticket까지 저장된 답변만 찾음. 첫 ticket에서는 (d) 결과가 비어 있음."
+  },
+  "figure": {
+    "eyebrow": "그림 1 · 코드 기준",
+    "heading": "ticket 하나마다: 분류 → 검색 → 초안 · 검토 · 정책 검사 → 저장",
+    "viewBox": [
+      860,
+      660
+    ],
+    "desc": "가상 답변 봇의 ticket별 처리 흐름을 시계방향 고리로. 윗줄 Each ticket → Classify → 검색 둘 → Prompt, 오른쪽 아래로 Draft-LLM, 아랫줄 Review-LLM → Policy check → Save reply → Last ticket?, no면 Each ticket으로 올라가고 yes면 Daily report. 가운데 Reply log에 Save reply가 쓰고 History 검색이 읽음.",
+    "legend": {
+      "x": 590,
+      "y": 40,
+      "col_w": 90,
+      "lines": {
+        "flow": "flow",
+        "write": "write log",
+        "read": "read"
+      }
+    },
+    "frames": [
+      {
+        "kind": "loop",
+        "x": 120,
+        "y": 124,
+        "w": 640,
+        "h": 430,
+        "label": "Iterate · oldest first",
+        "at": [
+          200,
+          143
+        ]
+      },
+      {
+        "kind": "group",
+        "x": 370,
+        "y": 140,
+        "w": 190,
+        "h": 150,
+        "label": "top-5 each"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "log",
+        "kind": "band",
+        "x": 270,
+        "y": 300,
+        "w": 350,
+        "h": 52,
+        "role": "merge",
+        "icon": "queue",
+        "label": "Reply log",
+        "tip": "Reply log: run 하나가 공유하는 답변 저장소(SQLite). (i)가 쓰고 (d)가 읽음."
+      },
+      {
+        "id": "tickets",
+        "x": 160,
+        "y": 40,
+        "role": "in",
+        "icon": "queue",
+        "label": "Tickets",
+        "pos": "above",
+        "fs": 12,
+        "tip": "Tickets: 지난 1시간 동안 들어온 문의. 접수 시각 순서."
+      },
+      {
+        "id": "faq",
+        "x": 380,
+        "y": 40,
+        "role": "in",
+        "icon": "doc",
+        "label": "FAQ docs",
+        "pos": "above",
+        "fs": 12,
+        "tip": "FAQ docs: run 시작 때 한 번 색인(BM25)."
+      },
+      {
+        "id": "a",
+        "badge": "a",
+        "x": 160,
+        "y": 170,
+        "role": "rule",
+        "icon": "queue",
+        "label": "Each ticket",
+        "tip": "(a) load_tickets(): 오래된 것부터 하나씩. support_bot.py:41"
+      },
+      {
+        "id": "b",
+        "badge": "b",
+        "x": 270,
+        "y": 170,
+        "role": "rule",
+        "icon": "filter",
+        "label": "Classify",
+        "tip": "(b) classify(): 키워드 규칙으로 billing · bug · other. LLM 없음. support_bot.py:58"
+      },
+      {
+        "id": "c",
+        "badge": "c",
+        "x": 380,
+        "y": 170,
+        "role": "search",
+        "icon": "search",
+        "label": "FAQ",
+        "fs": 12.5,
+        "tip": "(c) FAQ 색인에서 ticket 제목 + 분류로 상위 5개. support_bot.py:73"
+      },
+      {
+        "id": "d",
+        "badge": "d",
+        "x": 480,
+        "y": 170,
+        "role": "search",
+        "icon": "search",
+        "label": "History",
+        "fs": 12.5,
+        "tip": "(d) Reply log에서 같은 분류의 지난 답변 상위 5개. 이번 ticket 답변은 아직 없음. support_bot.py:80",
+        "pos": "above"
+      },
+      {
+        "id": "e",
+        "badge": "e",
+        "x": 620,
+        "y": 170,
+        "role": "rule",
+        "icon": "prompt",
+        "label": "Prompt",
+        "pos": "above",
+        "tip": "(e) ticket 본문 · 분류 · (c)(d) 결과, 재시도면 검토 지적을 붙임. support_bot.py:95"
+      },
+      {
+        "id": "f",
+        "badge": "f",
+        "x": 620,
+        "y": 430,
+        "role": "llm",
+        "icon": "gen",
+        "label": "Draft-LLM",
+        "pos": "right",
+        "tip": "(f) 답변 초안 생성. 응답이 비면 검토 없이 바로 재시도. support_bot.py:110"
+      },
+      {
+        "id": "g",
+        "badge": "g",
+        "x": 490,
+        "y": 430,
+        "role": "llm",
+        "icon": "judge",
+        "label": "Review-LLM",
+        "pos": "above",
+        "tip": "(g) 초안을 ok · fix · reject로 판정. fix면 고친 초안을 (h)로. support_bot.py:126"
+      },
+      {
+        "id": "h",
+        "badge": "h",
+        "x": 380,
+        "y": 430,
+        "role": "rule",
+        "icon": "shield",
+        "label": "Policy check",
+        "pos": "above",
+        "tip": "(h) 금지어 · 환불 금액 상한 규칙 검사. 실패하면 이유를 붙여 (f)로. support_bot.py:140"
+      },
+      {
+        "id": "i",
+        "badge": "i",
+        "x": 270,
+        "y": 430,
+        "role": "merge",
+        "icon": "layers",
+        "label": "Save reply",
+        "tip": "(i) 통과한 답변을 Reply log에 저장하고 ticket을 닫음. support_bot.py:152"
+      },
+      {
+        "id": "j",
+        "badge": "j",
+        "kind": "decision",
+        "cx": 190,
+        "cy": 460,
+        "label": "Last ticket?",
+        "tip": "(j) 남은 ticket이 있으면 no → (a). 없으면 yes → (k)."
+      },
+      {
+        "id": "k",
+        "badge": "k",
+        "x": 160,
+        "y": 580,
+        "role": "out",
+        "icon": "chart",
+        "label": "Daily report",
+        "pos": "right",
+        "tip": "(k) 분류별 처리 수 · 재시도 수 집계. support_bot.py:170"
+      }
+    ],
+    "edges": [
+      {
+        "from": "tickets",
+        "to": "a"
+      },
+      {
+        "from": "faq",
+        "to": "c",
+        "kind": "read"
+      },
+      {
+        "from": "a",
+        "to": "b"
+      },
+      {
+        "from": "b",
+        "to": "c",
+        "path": [
+          [
+            330,
+            200
+          ],
+          [
+            368,
+            200
+          ]
+        ]
+      },
+      {
+        "path": [
+          [
+            560,
+            200
+          ],
+          [
+            618,
+            200
+          ]
+        ]
+      },
+      {
+        "from": "e",
+        "to": "f"
+      },
+      {
+        "from": "f",
+        "to": "g"
+      },
+      {
+        "from": "g",
+        "to": "h",
+        "label": "ok · fix",
+        "lcls": "xs"
+      },
+      {
+        "from": "h",
+        "to": "i",
+        "label": "pass",
+        "lcls": "xs"
+      },
+      {
+        "from": "i",
+        "to": "j"
+      },
+      {
+        "from": "i",
+        "to": "log",
+        "kind": "write",
+        "label": "Reply saved",
+        "at": [
+          308,
+          395
+        ]
+      },
+      {
+        "from": "log",
+        "to": "d",
+        "kind": "read"
+      },
+      {
+        "path": [
+          [
+            520,
+            490
+          ],
+          [
+            520,
+            525
+          ]
+        ],
+        "arrow": false
+      },
+      {
+        "path": [
+          [
+            410,
+            490
+          ],
+          [
+            410,
+            525
+          ],
+          [
+            650,
+            525
+          ],
+          [
+            650,
+            494
+          ]
+        ],
+        "label": "reject / fail → retry (≤ 2)",
+        "at": [
+          530,
+          541
+        ]
+      },
+      {
+        "path": [
+          [
+            145,
+            460
+          ],
+          [
+            134,
+            460
+          ],
+          [
+            134,
+            200
+          ],
+          [
+            158,
+            200
+          ]
+        ],
+        "loop": true,
+        "label": "next ticket",
+        "at": [
+          142,
+          340
+        ]
+      },
+      {
+        "from": "j",
+        "to": "k",
+        "label": "yes",
+        "at": [
+          198,
+          540
+        ]
+      }
+    ],
+    "texts": [
+      {
+        "x": 140,
+        "y": 426,
+        "text": "no"
+      }
+    ],
+    "caption": "(h)가 두 번 더 실패하면 그 ticket은 저장하지 않고 사람 상담원 큐로 넘김(그림에서 뺌, 보충 참고)."
+  },
+  "matrix": {
+    "heading": "설정마다 쓰는 단계",
+    "cols": [
+      [
+        "(a)",
+        "Each ticket"
+      ],
+      [
+        "(b)",
+        "Classify"
+      ],
+      [
+        "(c)",
+        "FAQ"
+      ],
+      [
+        "(d)",
+        "History"
+      ],
+      [
+        "(e)",
+        "Prompt"
+      ],
+      [
+        "(f)",
+        "Draft-LLM"
+      ],
+      [
+        "(g)",
+        "Review-LLM"
+      ],
+      [
+        "(h)",
+        "Policy check"
+      ],
+      [
+        "(i)",
+        "Save reply"
+      ],
+      [
+        "(k)",
+        "Daily report"
+      ]
+    ],
+    "rows": [
+      {
+        "name": "full",
+        "cells": [
+          "full",
+          "full",
+          "full",
+          "full",
+          "full",
+          "full",
+          "full",
+          "full",
+          "full",
+          "full"
+        ]
+      },
+      {
+        "name": "--no-review",
+        "cells": [
+          "full",
+          "full",
+          "full",
+          "full",
+          "full",
+          "full",
+          "none",
+          "full",
+          "full",
+          "full"
+        ]
+      },
+      {
+        "name": "--rules-only",
+        "cells": [
+          "full",
+          "full",
+          {
+            "v": "part",
+            "tip": "FAQ 1위 문서를 그대로 답변으로"
+          },
+          "none",
+          "none",
+          "none",
+          "none",
+          "full",
+          "full",
+          "full"
+        ]
+      }
+    ]
+  },
+  "steps": {
+    "heading": "처리 단계 (a)–(k)",
+    "items": [
+      {
+        "k": "a",
+        "text": "Tickets를 접수 시각 순서로 하나씩 처리"
+      },
+      {
+        "k": "b",
+        "text": "키워드 규칙으로 billing · bug · other 분류"
+      },
+      {
+        "k": "c",
+        "text": "FAQ docs에서 제목 + 분류로 상위 5개 검색"
+      },
+      {
+        "k": "d",
+        "text": "Reply log에서 같은 분류의 지난 답변 상위 5개 검색"
+      },
+      {
+        "k": "e",
+        "text": "ticket 본문 · 분류 · (c)(d) 결과를 묶어 Prompt 생성"
+      },
+      {
+        "k": "f",
+        "text": "LLM이 Prompt를 받아 답변 초안 생성"
+      },
+      {
+        "k": "g",
+        "text": "LLM이 초안을 ok · fix · reject로 판정. reject면 지적을 붙여 retry"
+      },
+      {
+        "k": "h",
+        "text": "금지어 · 환불 금액 상한 규칙 검사. 실패 시 이유를 붙여 retry"
+      },
+      {
+        "k": "i",
+        "text": "통과한 답변을 Reply log에 저장"
+      },
+      {
+        "k": "j",
+        "text": "마지막 ticket이면 (k)로. 아니면 (a)로 돌아가 다음 ticket"
+      },
+      {
+        "k": "k",
+        "text": "분류별 처리 수 · 재시도 수를 Daily report로 집계"
+      }
+    ]
+  },
+  "notes": {
+    "heading": "코드 기준 보충",
+    "lede": "단계 문구로 다 담지 못한 코드 동작. 근거는 가상 파일 `support_bot.py`.",
+    "items": [
+      {
+        "title": "(d) 검색 시점",
+        "text": "(i) 저장보다 앞이라 이번 ticket의 답변은 찾지 못함. 첫 ticket은 결과가 비어 있음.",
+        "ref": "`support_bot.py:80`"
+      },
+      {
+        "title": "retry 횟수",
+        "text": "첫 생성 포함 최대 3번(MAX_RETRY = 2). 모두 실패하면 저장하지 않고 human 큐로.",
+        "ref": "`support_bot.py:22, 160`"
+      }
+    ]
+  },
+  "diff": {
+    "heading": "초안 그림과 다른 점",
+    "cols": [
+      "곳",
+      "초안 그림",
+      "코드"
+    ],
+    "rows": [
+      [
+        "History 검색",
+        "이번 ticket 답변까지 봄",
+        "앞 ticket까지만. (i)가 (d)보다 뒤"
+      ],
+      [
+        "Policy check 실패",
+        "run 멈춤",
+        "이유를 붙여 (f)로 retry"
+      ]
+    ]
+  }
+}
