@@ -382,6 +382,7 @@ XJS = """
     if(cur) cur.classList.remove('on'); cur=g; g.classList.add('on');
     K.textContent=d.kind||(g.classList.contains('edge')?'주고받는 데이터':'저장된 형태');
     T.textContent=d.title||''; B.textContent='';
+    if(d.href){ var a=el('a','xgo',(d.href_label||'이 단계 그림으로 들어가기')+' →'); a.href=d.href; B.appendChild(a); }
     if(d.lede) B.appendChild(el('p','xlede',d.lede));
     (d.items||[]).forEach(function(it){
       var s=el('section','xit'); if(it.h) s.appendChild(el('h4',null,it.h));
@@ -397,11 +398,15 @@ XJS = """
     g.addEventListener('mouseenter',function(){ if(!pinned) show(g) });
     g.addEventListener('mouseleave',function(){ if(!pinned) hide() });
     g.addEventListener('focus',function(){ if(!pinned) show(g) });
-    function pin(ev){ ev.preventDefault(); if(pinned===g){hide();return} pinned=g; show(g); }
+    // 같은 타일을 다시 눌러도 닫지 않음 — 두 번 누르기(들어가기)가 누르기 두 번을 먼저 일으키기 때문. 닫기는 × · Esc · 빈 곳.
+    function pin(ev){ ev.preventDefault(); ev.stopPropagation(); pinned=g; show(g); }
     g.addEventListener('click',pin);
+    g.addEventListener('dblclick',function(){ var d=X[g.dataset.x]; if(d&&d.href) location.href=d.href });
+    if(X[g.dataset.x]&&X[g.dataset.x].href) g.classList.add('drill');
     g.addEventListener('keydown',function(ev){ if(ev.key==='Enter'||ev.key===' ') pin(ev) });
   });
   document.getElementById('xclose').addEventListener('click',hide);
+  document.addEventListener('click',function(ev){ if(pinned&&!P.contains(ev.target)&&!ev.target.closest('.has-data')) hide() });
   document.addEventListener('keydown',function(ev){ if(ev.key==='Escape') hide() });
 })();
 """

@@ -112,3 +112,7 @@ svg .node.has-data:hover .tile,svg .node.on .tile{stroke:var(--hl-line);stroke-w
   white-space:pre-wrap;overflow-wrap:anywhere;max-height:46vh;overflow:auto}
 .xnote{font-size:13px;color:var(--muted)}
 @media (max-width:720px){.xpanel{top:auto;left:0;width:100vw;height:62vh;border-left:0;border-top:1px solid var(--line)}}
+.xgo{display:inline-block;font:500 14px var(--sans);color:var(--c-search);border:1px solid var(--c-search);border-radius:6px;padding:6px 12px;text-decoration:none;width:max-content}
+.xgo:hover,.xgo:focus-visible{background:var(--c-search);color:#fff;outline:none}
+svg .node.drill .tile{stroke:var(--c-search);stroke-width:2.5;stroke-dasharray:5 3}
+.mode-color svg .node.drill .tile{stroke:#FFFFFF}
